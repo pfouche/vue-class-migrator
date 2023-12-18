@@ -8,7 +8,12 @@ const program = new Command()
     'If you would like to generate a SFC and remove the original scss and ts files',
     false,
   )
-  .action((options) => migrateDirectory(options.directory, options.sfc))
+  .option(
+    '-c, --composition',
+    'Move to Composition API',
+    true,
+  )
+  .action((options) => migrateDirectory(options.directory, options.sfc, options.composition))
   .parse(process.argv);
 
 export default program;

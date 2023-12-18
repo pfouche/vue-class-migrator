@@ -8,16 +8,17 @@ export const getScriptContent = (vueSourceFile: SourceFile): string | undefined 
   return match ? match[1] : undefined;
 };
 
-export const injectScript = (tsSourceFile: SourceFile, vueTemplate: string): string => {
+export const injectScript = (tsSourceFile: SourceFile, vueTemplate: string, composition: boolean): string => {
   const scriptTag = vueTemplate.match(/<script.*\/>|<script.*>([\s\S]*)<\/script>/);
 
   if (!scriptTag) {
     throw new Error('Script tag not foung on vue file.');
   }
 
+  const setup = composition ? 'setup ' : ''
   return vueTemplate.replace(
     scriptTag[0],
-    `<script lang="ts">\n${tsSourceFile.getText()}\n</script>`,
+    `<script ${setup}lang="ts">\n${tsSourceFile.getText()}\n</script>`,
   );
 };
 
@@ -74,7 +75,7 @@ export const vueFileToSFC = async (
   if (tsFileRelativePath) {
     const tsFileAbsolutePath = path.resolve(vueSourceFile.getDirectoryPath(), tsFileRelativePath);
     const tsSourceFile = project.addSourceFileAtPath(tsFileAbsolutePath);
-    vueFileText = injectScript(tsSourceFile, vueFileText);
+    vueFileText = injectScript(tsSourceFile, vueFileText, false);
     await tsSourceFile.deleteImmediately();
   }
 

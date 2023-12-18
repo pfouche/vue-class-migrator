@@ -4,17 +4,21 @@ import {
   SourceFile,
 } from 'ts-morph';
 import logger from './logger';
+import {createCompositionMigrationManager} from './comp/migratorManager';
+import migrateVueClassComponentToCompositionApi from './comp/vue-class-component';
+import migrateVueClassPropertiesToCompositionApi from './comp/vue-property-decorator';
+import migrateVuexDecoratorsToCompositionApi from './comp/vuex';
+import {createMigrationManager} from './migratorManager';
 import migrateVueClassComponent from './vue-class-component';
 import migrateVueClassProperties from './vue-property-decorator';
 import migrateVuexDecorators from './vuex';
-import { getScriptContent, injectScript, vueFileToSFC } from './migrator-to-sfc';
-import { createMigrationManager } from './migratorManager';
+import {getScriptContent, injectScript, vueFileToSFC} from './migrator-to-sfc';
 
 const migrateTsFile = async (project: Project, sourceFile: SourceFile): Promise<SourceFile> => {
   const filePath = sourceFile.getFilePath();
-  const { name, ext } = path.parse(path.basename(filePath));
+  const {name, ext} = path.parse(path.basename(filePath));
   const outPath = path.join(path.dirname(filePath), `${name}_migrated${ext}`);
-  const outFile = project.createSourceFile(outPath, sourceFile.getText(), { overwrite: true });
+  const outFile = project.createSourceFile(outPath, sourceFile.getText(), {overwrite: true});
 
   try {
     const migrationManager = createMigrationManager(sourceFile, outFile);
@@ -26,24 +30,45 @@ const migrateTsFile = async (project: Project, sourceFile: SourceFile): Promise<
     await outFile.deleteImmediately();
     throw error;
   }
-  return outFile.moveImmediately(sourceFile.getFilePath(), { overwrite: true });
+  return outFile.moveImmediately(sourceFile.getFilePath(), {overwrite: true});
 };
 
-const migrateVueFile = async (project: Project, vueSourceFile: SourceFile) => {
+const migrateTsFileToCompositionApi = async (project: Project, sourceFile: SourceFile): Promise<SourceFile> => {
+  const filePath = sourceFile.getFilePath();
+  const {name, ext} = path.parse(path.basename(filePath));
+  const outPath = path.join(path.dirname(filePath), `${name}_migrated${ext}`);
+  const outFile = project.createSourceFile(outPath, sourceFile.getText(), {overwrite: true});
+
+  try {
+    const migrationManager = createCompositionMigrationManager(sourceFile, outFile);
+
+    migrateVueClassComponentToCompositionApi(migrationManager);
+    migrateVueClassPropertiesToCompositionApi(migrationManager);
+    migrateVuexDecoratorsToCompositionApi(migrationManager);
+  } catch (error) {
+    await outFile.deleteImmediately();
+    throw error;
+  }
+  return outFile.moveImmediately(sourceFile.getFilePath(), {overwrite: true});
+};
+
+const migrateVueFile = async (project: Project, vueSourceFile: SourceFile, composition: boolean) => {
   const scriptContent = getScriptContent(vueSourceFile);
   if (!scriptContent) {
     throw new Error('Unable to extract script tag content');
   }
   const filePath = vueSourceFile.getFilePath();
-  const { name } = path.parse(path.basename(filePath));
+  const {name} = path.parse(path.basename(filePath));
   const outPath = path.join(path.dirname(filePath), `${name}_temp_migrated.ts`);
-  let outFile = project.createSourceFile(outPath, scriptContent, { overwrite: true });
+  let outFile = project.createSourceFile(outPath, scriptContent, {overwrite: true});
 
   try {
-    outFile = await migrateTsFile(project, outFile);
+    outFile = composition
+      ? await migrateTsFileToCompositionApi(project, outFile)
+      : await migrateTsFile(project, outFile);
     const vueFileText = vueSourceFile.getText();
     vueSourceFile.removeText();
-    vueSourceFile.insertText(0, injectScript(outFile, vueFileText));
+    vueSourceFile.insertText(0, injectScript(outFile, vueFileText, composition));
 
     await vueSourceFile.save();
     return vueSourceFile;
@@ -52,7 +77,7 @@ const migrateVueFile = async (project: Project, vueSourceFile: SourceFile) => {
   }
 };
 
-export const migrateFile = async (project: Project, sourceFile: SourceFile) => {
+export const migrateFile = async (project: Project, sourceFile: SourceFile, composition: boolean = false) => {
   logger.info(`Migrating ${sourceFile.getBaseName()}`);
   if (!sourceFile.getText().includes('@Component')) {
     throw new Error('File already migrated');
@@ -61,17 +86,19 @@ export const migrateFile = async (project: Project, sourceFile: SourceFile) => {
   const ext = sourceFile.getExtension();
 
   if (ext === '.ts') {
-    return migrateTsFile(project, sourceFile);
+    return composition
+      ? await migrateTsFileToCompositionApi(project, sourceFile)
+      : await migrateTsFile(project, sourceFile);
   }
 
   if (ext === '.vue') {
-    return migrateVueFile(project, sourceFile);
+    return migrateVueFile(project, sourceFile, composition);
   }
 
   throw new Error(`Extension ${ext} not supported`);
 };
 
-export const migrateDirectory = async (directoryPath: string, toSFC: boolean) => {
+export const migrateDirectory = async (directoryPath: string, toSFC: boolean, composition: boolean) => {
   const directoryToMigrate = path.join(process.cwd(), directoryPath);
   const project = new Project({});
 
@@ -93,7 +120,7 @@ export const migrateDirectory = async (directoryPath: string, toSFC: boolean) =>
   );
 
   const migrationPromises = finalFilesToMigrate
-    .map((sourceFile) => migrateFile(project, sourceFile)
+    .map((sourceFile) => migrateFile(project, sourceFile, composition)
       .catch((err) => {
         logger.error(`Error migrating ${sourceFile.getFilePath()}`);
         logger.error(err);

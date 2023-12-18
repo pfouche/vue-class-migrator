@@ -1,10 +1,4 @@
 
-![CI](https://github.com/getyourguide/vue-class-migrator/workflows/CI/badge.svg)
-
-![npm](https://img.shields.io/npm/v/vue-class-migrator)
-![npm](https://img.shields.io/npm/dm/vue-class-migrator)
-
-
 ## Vue Class Migrator CLI
 
 Vue Class Migrator is a utility designed to facilitate the migration of Vue and TypeScript files using the `@component` decorator from `vue-class-components` to the `defineComponent` format. Under the hood, it employs `ts-morph` for parsing and generating files.
