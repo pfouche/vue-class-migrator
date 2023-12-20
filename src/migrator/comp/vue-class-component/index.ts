@@ -8,9 +8,9 @@ import migrateSetters from './migrate-setters';
 
 export default (migrationManager: MigrationManager) => {
   migrateImports(migrationManager.outFile);
-  migrateExtends(migrationManager.clazz, migrationManager.mainObject);
-  migrateData(migrationManager.clazz, migrationManager.mainObject);
+  migrateExtends(migrationManager.clazz);
+  migrateData(migrationManager.clazz, migrationManager.outFile);
   migrateGetters(migrationManager);
   migrateSetters(migrationManager.clazz, migrationManager.mainObject);
-  migrateMethods(migrationManager.clazz, migrationManager.mainObject);
+  migrateMethods(migrationManager.clazz, migrationManager.outFile);
 };

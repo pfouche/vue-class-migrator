@@ -7,137 +7,180 @@ import {
   SourceFile,
   SyntaxKind,
   TypeNode,
-} from 'ts-morph'
-import {addPropertyObject, getArrayProperty, getObjectProperty} from '../utils'
-import {ComputedProps, MigratePartProps} from '../types/migrator'
-import {supportedDecorators} from '../config'
-import getDefineComponentInit from '../migrate-component-decorator'
+} from 'ts-morph';
+import {ComputedProps, MigratePartProps} from '../types/migrator';
+import {supportedDecorators} from '../config';
+import getDefineComponentInit from '../migrate-component-decorator';
+import {AddProps} from "./vue-property-decorator/prop";
+import {addVueImport} from "../../__tests__/utils";
 
 export default class MigrationManager {
-  private _clazz: ClassDeclaration
+  private _clazz: ClassDeclaration;
 
-  private _mainObject: ObjectLiteralExpression
+  private _mainObject: ObjectLiteralExpression;
 
-  private _outFile: SourceFile
+  private _outFile: SourceFile;
 
   constructor(props: MigratePartProps) {
-    this._mainObject = props.mainObject
-    this._clazz = props.clazz
-    this._outFile = props.outFile
+    this._mainObject = props.mainObject;
+    this._clazz = props.clazz;
+    this._outFile = props.outFile;
   }
 
   get mainObject(): ObjectLiteralExpression {
-    return this._mainObject
+    return this._mainObject;
   }
 
   get clazz(): ClassDeclaration {
-    return this._clazz
+    return this._clazz;
   }
 
   get outFile(): SourceFile {
-    return this._outFile
+    return this._outFile;
   }
 
   addModel(options: {
     propName: string,
     eventName: string,
   }) {
-    if (this.mainObject.getProperty('model')) {
-      throw new Error('The component has two models.')
-    }
-    const modelObject = getObjectProperty(this.mainObject, 'model')
-    modelObject
-      .addPropertyAssignment({
-        name: 'prop',
-        initializer: `"${options.propName}"`,
-      })
-
-    modelObject
-      .addPropertyAssignment({
-        name: 'event',
-        initializer: `"${options.eventName}"`,
-      })
+    // if (this.mainObject.getProperty('model')) {
+    //   throw new Error('The component has two models.')
+    // }
+    // const modelObject = getObjectProperty(this.mainObject, 'model')
+    // modelObject
+    //   .addPropertyAssignment({
+    //     name: 'prop',
+    //     initializer: `"${options.propName}"`,
+    //   })
+    //
+    // modelObject
+    //   .addPropertyAssignment({
+    //     name: 'event',
+    //     initializer: `"${options.eventName}"`,
+    //   })
   }
 
   addProp(options: {
     propName: string;
     propNode: Node | undefined;
     tsType: TypeNode | undefined;
-  }): ObjectLiteralExpression {
-    const propsObject = getObjectProperty(this.mainObject, 'props')
-    const {
-      propName, propNode, tsType,
-    } = options
+  }) {
+    // }): ObjectLiteralExpression {
+    // const propsObject = getObjectProperty(this.mainObject, 'props')
+    // const {
+    //   propName, propNode, tsType,
+    // } = options
+    //
+    // let propObject: ObjectLiteralExpression
+    // if (!propNode) {
+    //   propObject = addPropertyObject(propsObject, propName)
+    //   propObject
+    //     .addPropertyAssignment({
+    //       name: 'type',
+    //       initializer: this.typeNodeToString(tsType),
+    //     })
+    //   return propObject
+    // }
 
-    let propObject: ObjectLiteralExpression
-    if (!propNode) {
-      propObject = addPropertyObject(propsObject, propName)
-      propObject
-        .addPropertyAssignment({
-          name: 'type',
-          initializer: this.typeNodeToString(tsType),
-        })
-      return propObject
-    }
+    // if (
+    //   propNode.isKind(SyntaxKind.Identifier) // e.g. String
+    //   || propNode.isKind(SyntaxKind.ArrayLiteralExpression) // e.g. [String, Boolean]
+    // ) {
+    //   propObject = addPropertyObject(propsObject, propName)
+    //   propObject
+    //     .addPropertyAssignment({
+    //       name: 'type',
+    //       initializer: propNode.getText(),
+    //     })
+    //   return propObject
+    // }
+    // if (propNode.isKind(SyntaxKind.ObjectLiteralExpression)) {
+    //   propObject = addPropertyObject(propsObject, propName, propNode.getText())
+    //   if (!propObject.getProperty('type')) {
+    //     propObject
+    //       .addPropertyAssignment({
+    //         name: 'type',
+    //         initializer: this.typeNodeToString(tsType),
+    //       })
+    //   }
+    //   return propObject
+    // }
+    // throw new Error(`Error adding prop ${propName}, Kind: ${propNode.getKindName()}.`)
+  }
 
-    if (
-      propNode.isKind(SyntaxKind.Identifier) // e.g. String
-      || propNode.isKind(SyntaxKind.ArrayLiteralExpression) // e.g. [String, Boolean]
-    ) {
-      propObject = addPropertyObject(propsObject, propName)
-      propObject
-        .addPropertyAssignment({
-          name: 'type',
-          initializer: propNode.getText(),
+
+  addProps({propsOptions, atLeastOneDefaultValue}: AddProps) {
+    const atLeastOneProp = Object.entries(propsOptions).length > 0
+    if (!atLeastOneProp)
+      return
+    
+    // Something like: {foo: string, bar: int}
+    const propsType = Object.entries(propsOptions)
+      .map(([propName, propOptions]) => {
+        const typeName = propOptions.tsType?.getText();
+        const required = propOptions.required;
+        // XXX We'd better remove 'undefined' from the union type, if any. 
+        // Would be more robust is undefined is not the last term.
+        const correctedTypeName = !required ? typeName?.replace(' | undefined', '') : typeName
+        return `${propName}${required ? '' : '?'}: ${correctedTypeName}`;
+      })
+      .join('\n');
+    
+    if (atLeastOneDefaultValue) {
+      addVueImport(this.outFile, 'withDefaults');
+      addVueImport(this.outFile, 'defineProps');
+      this.outFile.addTypeAlias({name: 'Props', type: `{\n${propsType}\n}`})
+      const defaultValues = Object.entries(propsOptions)
+        .filter(([, propOptions]) => propOptions.defaultValue)
+        .map(([propName, propOptions]) => {
+          return `${propName}: ${propOptions.defaultValue},`;
         })
-      return propObject
+        .join('\n');
+      this.outFile.addStatements(writer => {
+        writer
+          .write(`\nconst props = withDefaults(defineProps<Props>(),`)
+          .block(() => writer.write(defaultValues))
+          .write(');')
+      });
+    } else {
+      addVueImport(this.outFile, 'defineProps');
+      this.outFile.addTypeAlias({name: 'Props', type: `{\n${propsType}\n}`})
+      this.outFile.addStatements(['\nconst props = defineProps<Props>();']);
     }
-    if (propNode.isKind(SyntaxKind.ObjectLiteralExpression)) {
-      propObject = addPropertyObject(propsObject, propName, propNode.getText())
-      if (!propObject.getProperty('type')) {
-        propObject
-          .addPropertyAssignment({
-            name: 'type',
-            initializer: this.typeNodeToString(tsType),
-          })
-      }
-      return propObject
-    }
-    throw new Error(`Error adding prop ${propName}, Kind: ${propNode.getKindName()}.`)
   }
 
   addComputedProp(options: ComputedProps) {
-    const computedObject = getObjectProperty(this.mainObject, 'computed')
-
-    if ('get' in options) {
-      const syncPropObject = addPropertyObject(computedObject, options.name)
-
-      if (options.cache !== undefined) {
-        syncPropObject.addPropertyAssignment({
-          name: 'cache',
-          initializer: `${options.cache}`,
-        })
-      }
-
-      syncPropObject.addMethod({
-        name: 'get',
-        statements: options.get.statements,
-        returnType: options.get.returnType,
-      })
-      if (options.set) {
-        syncPropObject.addMethod({
-          name: 'set',
-          parameters: options.set.parameters,
-          statements: options.set.statements,
-        })
-      }
-    } else {
-      computedObject.addMethod({
-        name: options.name,
-        returnType: options.returnType,
-        statements: options.statements,
-      })
-    }
+    // const computedObject = getObjectProperty(this.mainObject, 'computed')
+    //
+    // if ('get' in options) {
+    //   const syncPropObject = addPropertyObject(computedObject, options.name)
+    //
+    //   if (options.cache !== undefined) {
+    //     syncPropObject.addPropertyAssignment({
+    //       name: 'cache',
+    //       initializer: `${options.cache}`,
+    //     })
+    //   }
+    //
+    //   syncPropObject.addMethod({
+    //     name: 'get',
+    //     statements: options.get.statements,
+    //     returnType: options.get.returnType,
+    //   })
+    //   if (options.set) {
+    //     syncPropObject.addMethod({
+    //       name: 'set',
+    //       parameters: options.set.parameters,
+    //       statements: options.set.statements,
+    //     })
+    //   }
+    // } else {
+    //   computedObject.addMethod({
+    //     name: options.name,
+    //     returnType: options.returnType,
+    //     statements: options.statements,
+    //   })
+    // }
   }
 
   addMethod(options: {
@@ -147,18 +190,18 @@ export default class MigrationManager {
     isAsync?: boolean;
     returnType?: string;
   }) {
-    const methodsMainObject = getObjectProperty(this.mainObject, 'methods')
-
-    if (methodsMainObject.getProperty(options.methodName)) {
-      throw new Error(`Duplicated method ${options.methodName}`)
-    }
-    methodsMainObject.addMethod({
-      name: options.methodName,
-      parameters: options.parameters,
-      isAsync: options.isAsync,
-      returnType: options.returnType,
-      statements: options.statements,
-    })
+    // const methodsMainObject = getObjectProperty(this.mainObject, 'methods')
+    //
+    // if (methodsMainObject.getProperty(options.methodName)) {
+    //   throw new Error(`Duplicated method ${options.methodName}`)
+    // }
+    // methodsMainObject.addMethod({
+    //   name: options.methodName,
+    //   parameters: options.parameters,
+    //   isAsync: options.isAsync,
+    //   returnType: options.returnType,
+    //   statements: options.statements,
+    // })
   }
 
   addWatch(options: {
@@ -166,45 +209,45 @@ export default class MigrationManager {
     watchOptions: string | undefined;
     handlerMethod: string;
   }) {
-    const watchMainObject = getObjectProperty(this.mainObject, 'watch')
-    const watchPropArray = getArrayProperty(watchMainObject, `"${options.watchPath}"`)
-    const newWatcher = watchPropArray
-      .addElement(options.watchOptions ?? '{}')
-      .asKindOrThrow(SyntaxKind.ObjectLiteralExpression)
-    newWatcher.addPropertyAssignment({
-      name: 'handler',
-      initializer: `"${options.handlerMethod}"`,
-    })
+    // const watchMainObject = getObjectProperty(this.mainObject, 'watch')
+    // const watchPropArray = getArrayProperty(watchMainObject, `"${options.watchPath}"`)
+    // const newWatcher = watchPropArray
+    //   .addElement(options.watchOptions ?? '{}')
+    //   .asKindOrThrow(SyntaxKind.ObjectLiteralExpression)
+    // newWatcher.addPropertyAssignment({
+    //   name: 'handler',
+    //   initializer: `"${options.handlerMethod}"`,
+    // })
   }
 
   addNamedImport(module: string, namedImport: string) {
     const importDeclaration = this._outFile
-      .getImportDeclaration((imp) => imp.getModuleSpecifierValue() === module)
+      .getImportDeclaration((imp) => imp.getModuleSpecifierValue() === module);
     if (!importDeclaration?.getNamedImports()
       .some((imp) => imp.getText() === namedImport)) {
-      importDeclaration?.addNamedImport('PropType')
+      importDeclaration?.addNamedImport('PropType');
     }
   }
 
   private typeNodeToString(typeNode: TypeNode | undefined): string {
-    const propertyType = typeNode?.getText() ?? 'any'
-    const isArray = Node.isArrayTypeNode(typeNode)
-    const isFunction = Node.isFunctionTypeNode(typeNode)
+    const propertyType = typeNode?.getText() ?? 'any';
+    const isArray = Node.isArrayTypeNode(typeNode);
+    const isFunction = Node.isFunctionTypeNode(typeNode);
     const propertyConstructorMapping: Record<string, string> = {
       string: 'String',
       boolean: 'Boolean',
       number: 'Number',
-    }
-    let fallbackType = 'Object'
-    fallbackType = isArray ? 'Array' : fallbackType
-    fallbackType = isFunction ? 'Function' : fallbackType
+    };
+    let fallbackType = 'Object';
+    fallbackType = isArray ? 'Array' : fallbackType;
+    fallbackType = isFunction ? 'Function' : fallbackType;
 
     if (!propertyConstructorMapping[propertyType]) {
-      this.addNamedImport('vue', 'PropType')
-      return `${fallbackType} as PropType<${propertyType}>`
+      this.addNamedImport('vue', 'PropType');
+      return `${fallbackType} as PropType<${propertyType}>`;
     }
 
-    return propertyConstructorMapping[propertyType]
+    return propertyConstructorMapping[propertyType];
   }
 }
 
@@ -216,14 +259,14 @@ export const createCompositionMigrationManager = (
   const sourceFileClass = sourceFile
     .getClasses()
     .filter((clazz) => clazz.getDecorator('Component'))
-    .pop()
+    .pop();
   const outClazz = outFile
     .getClasses()
     .filter((clazz) => clazz.getDecorator('Component'))
-    .pop()
+    .pop();
 
   if (!sourceFileClass || !outClazz) {
-    throw new Error('Class implementing the @Component decorator not found.')
+    throw new Error('Class implementing the @Component decorator not found.');
   }
 
   // Validation
@@ -232,15 +275,15 @@ export const createCompositionMigrationManager = (
     .flatMap((prop) => prop.getDecorators())
     .forEach((decorator) => {
       if (!supportedDecorators.includes(decorator.getName())) {
-        throw new Error(`Decorator @${decorator.getName()} not supported`)
+        throw new Error(`Decorator @${decorator.getName()} not supported`);
       }
-    })
+    });
 
-  const defineComponentInitObject = getDefineComponentInit(sourceFileClass)
-  let clazzReplacement: string
+  const defineComponentInitObject = getDefineComponentInit(sourceFileClass);
+  let clazzReplacement: string;
   if (!outClazz.getDefaultKeyword()) {
     // Non default exported class
-    throw new Error('Non-default exported class not supported')
+    throw new Error('Non-default exported class not supported');
     // clazzReplacement = [
     //   outClazz?.getExportKeyword()?.getText(),
     //   `const ${outClazz.getName()} =`,
@@ -255,16 +298,20 @@ export const createCompositionMigrationManager = (
       `defineComponent(${defineComponentInitObject})`,
     ]
       .filter((s) => s)
-      .join(' ')
+      .join(' ');
   }
 
   // Main structure
+  // const mainObject = outClazz
+  //   // .replaceWithText(clazzReplacement)
+  //   .getFirstDescendantByKind(SyntaxKind.ObjectLiteralExpression)
+
   const mainObject = outClazz
-    .replaceWithText(clazzReplacement)
-    .getFirstDescendantByKind(SyntaxKind.ObjectLiteralExpression)
+    .replaceWithText('const mainObject = {}')
+    .getFirstDescendantByKind(SyntaxKind.ObjectLiteralExpression);
 
   if (!mainObject) {
-    throw new Error('Unable to create defineComponent')
+    throw new Error('Unable to create mainObject');
   }
 
   const migratePartProps: MigratePartProps = {
@@ -272,6 +319,6 @@ export const createCompositionMigrationManager = (
     mainObject,
     outFile,
     sourceFile,
-  }
-  return new MigrationManager(migratePartProps)
-}
+  };
+  return new MigrationManager(migratePartProps);
+};

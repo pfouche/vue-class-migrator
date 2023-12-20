@@ -1,4 +1,4 @@
-import { project, expectMigration } from '../../utils';
+import { project, expectMigration } from '../utils';
 
 describe('Data Property Migration', () => {
   afterAll(() => {
@@ -17,13 +17,12 @@ describe('Data Property Migration', () => {
         // Results
         `import { defineComponent } from "vue";
 
-                export default defineComponent({
-                    computed: {
-                        params(): string {
-                            return "hello";
-                        }
-                    }
-                })`,
+                export default defineComponent()
+                
+                const params = computed(() => {
+                    this.$emit("change", p1);
+                });
+                `,
       );
     });
   });

@@ -3,9 +3,9 @@ import type {
   ObjectLiteralExpression,
   ClassDeclaration,
   PropertyDeclaration,
-  Node,
+  Node, SourceFile,
 } from 'ts-morph';
-import { SyntaxKind } from 'ts-morph';
+import {SyntaxKind} from 'ts-morph';
 
 export const addPropertyObject = (mainObject: ObjectLiteralExpression, propName: string, initializer = '{}'): ObjectLiteralExpression => mainObject
   .addPropertyAssignment({
@@ -55,6 +55,9 @@ export const extractPropertiesWithDecorator = (
   .getProperties()
   .filter((prop) => prop.getDecorator(decoratorName));
 
+export const extractClassPropertyData = (clazz: ClassDeclaration): PropertyDeclaration[] =>
+  clazz.getProperties().filter((prop) => !prop.getDecorators().length);
+
 export const stringNodeToSTring = (node: Node): string => {
   if (
     node.isKind(SyntaxKind.StringLiteral)
@@ -64,3 +67,7 @@ export const stringNodeToSTring = (node: Node): string => {
   }
   throw new Error(`Node is not a string: ${node.getKindName()}`);
 };
+
+export const unsupported = (outFile: SourceFile, msg: string) => {
+  outFile.addStatements([`console.error('MIGRATION ERROR: ${msg}')`]);
+}; 

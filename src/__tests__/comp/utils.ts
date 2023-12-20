@@ -1,6 +1,6 @@
 import { randomBytes } from 'crypto';
-import {Project, SourceFile} from 'ts-morph';
-import { migrateFile } from '../migrator';
+import { Project } from 'ts-morph';
+import { migrateFile } from '../../migrator';
 
 export const project = new Project({ useInMemoryFileSystem: true });
 export const createSourceFile = (content = undefined as string | undefined, ext = 'ts') => {
@@ -11,7 +11,7 @@ export const createSourceFile = (content = undefined as string | undefined, ext 
 export const expectMigration = async (sourceCode: string, targetCode: string) : Promise<void> => {
   const sourceFile = createSourceFile(sourceCode.replaceAll('  ', ''));
 
-  const migratedFile = await migrateFile(project, sourceFile);
+  const migratedFile = await migrateFile(project, sourceFile, true);
   expect(migratedFile.getText().replaceAll('  ', ''))
     .toBe(targetCode.replaceAll('  ', ''));
 };
@@ -21,22 +21,7 @@ export const expectMigrationToThrow = async (
   errorMessage: string,
 ) : Promise<void> => {
   const sourceFile = createSourceFile(sourceCode);
-  await expect(migrateFile(project, sourceFile))
+  await expect(migrateFile(project, sourceFile,true))
     .rejects
     .toThrow(errorMessage);
 };
-
-export const addVueImport = (outFile: SourceFile, newImport: string) => {
-  const vueImport = outFile.getImportDeclaration(
-    (importDeclaration) => importDeclaration.getModuleSpecifierValue() === 'vue',
-  );
-
-  if (!vueImport) {
-    outFile.addImportDeclaration({
-      defaultImport: `{ ${newImport} }`,
-      moduleSpecifier: 'vue',
-    });
-  } else {
-    vueImport.addNamedImport(newImport);
-  }
-}

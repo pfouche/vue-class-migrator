@@ -1,4 +1,4 @@
-import { project, expectMigration, expectMigrationToThrow } from '../../utils';
+import { project, expectMigration, expectMigrationToThrow } from '../utils';
 
 describe('@Component decorator', () => {
   afterAll(() => {
@@ -8,25 +8,21 @@ describe('@Component decorator', () => {
   test('Empty @Component({}) props resolves', async () => {
     await expectMigration(
       `@Component({})
-            class Test {}
+            export default class Test {}
             `,
-      `import { defineComponent } from "vue";
-
-            const Test = defineComponent({})
-        `,
+      `const mainObject = {}
+      `,
     );
   });
 
   test('Empty @Component props resolves', async () => {
     await expectMigration(
       `@Component
-            class Test {}
+            export default class Test {}
             `,
       // Result
-      `import { defineComponent } from "vue";
-
-            const Test = defineComponent({})
-        `,
+      `const mainObject = {}
+      `,
     );
   });
 

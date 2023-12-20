@@ -1,13 +1,13 @@
-import { project, expectMigration, expectMigrationToThrow } from '../../utils';
+import { project, expectMigration, expectMigrationToThrow } from '../utils';
 
 describe('Data Property Migration', () => {
   afterAll(() => {
     project.getSourceFiles().forEach((file) => file.deleteImmediatelySync());
   });
 
-  describe('@Component data decorator', () => {
-    test('Class data() & @Component({data():...}) throws', async () => {
-      await expectMigrationToThrow(
+  describe('Data method unsupported', () => {
+    test('Data method unsupported in @Component', async () => {
+      await expectMigration(
         `@Component({
                     data() {
                         return {
@@ -16,20 +16,13 @@ describe('Data Property Migration', () => {
                         }
                     }
                 })
-                export default class Test extends Vue {
-                    data() {
-                        return {
-                            hello: false,
-                            goodbye
-                        }
-                    }
-                }`,
+                export default class Test extends Vue {}`,
         // Throws
-        'Having a class with the data() method and the @Component({data(): ...} at the same time is not supported.',
+        `console.error('MIGRATION ERROR: Having a class with @Component({data(): ...} or a data() method is not supported.')`,
       );
     });
 
-    test('@Component data should be explicit', async () => {
+    test('@Component data unsupported', async () => {
       await expectMigrationToThrow(
         `@Component({
                     data,
@@ -40,64 +33,8 @@ describe('Data Property Migration', () => {
       );
     });
 
-    test('@Component data: () => {}', async () => {
-      await expectMigration(
-        `@Component({
-                    data: () => { return { a: 1 }; }
-                })
-                export default class Test extends Vue {}`,
-        // Result
-        `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    data: () => { return { a: 1 }; }
-                })`,
-      );
-    });
-
-    test('@Component data() {}', async () => {
-      await expectMigration(
-        `@Component({
-                    data() { return { a: 1 }; }
-                })
-                export default class Test extends Vue {}`,
-        // Result
-        `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    data() { return { a: 1 }; }
-                })`,
-      );
-    });
-
-    test('@Comoponent data complex return', async () => {
-      await expectMigration(
-        `@Component({
-                    data() {
-                        return {
-                            sun,
-                            moon: false
-                        }
-                    }
-                })
-                export default class Test extends Vue {}`,
-        // Results
-        `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    data() {
-                        return {
-                            sun,
-                            moon: false
-                        }
-                    }
-                })`,
-      );
-    });
-  });
-
-  describe('Data class method', () => {
-    test('Class data() method is replicated', async () => {
+    
+    test('Data method unsupported in component class', async () => {
       await expectMigration(
         `@Component
                 export default class Test extends Vue {
@@ -106,87 +43,7 @@ describe('Data Property Migration', () => {
                     };
                 }`,
         // Throws
-        `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    data() {
-                        return {};
-                    }
-                })`,
-      );
-    });
-
-    test('Class data() & class props get combined', async () => {
-      await expectMigration(
-        `@Component()
-                export default class Test extends Vue {
-                    hello = true;
-                    goodbye: string = "goodbye";
-                    data() {
-                        return {
-                            sun,
-                            moon: false
-                        }
-                    }
-                }`,
-        // Results
-        `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    data() {
-                        const goodbye: string = "goodbye";
-                        
-                        return {
-                            sun,
-                            moon: false,
-                            hello: true,
-                            goodbye
-                        }
-                    }
-                })`,
-      );
-    });
-
-    test('@Component data & class data gets combined', async () => {
-      await expectMigration(
-        `@Component({
-                    data() {
-                        return {
-                            sun,
-                            moon: {
-                                out: false
-                            }
-                        }
-                    }
-                })
-                export default class Test extends Vue {
-                    hello = true;
-                    goodbye: string = "goodbye";
-                    salutation: {
-                        show: string
-                    }
-                }`,
-        // Results
-        `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    data() {
-                        const salutation: {
-                            show: string
-                        } = undefined;
-                        const goodbye: string = "goodbye";
-
-                        return {
-                            sun,
-                            moon: {
-                                out: false
-                            },
-                            hello: true,
-                            goodbye,
-                            salutation
-                        }
-                    }
-                })`,
+        `console.error('MIGRATION ERROR: Having a class with @Component({data(): ...} or a data() method is not supported.')`,
       );
     });
   });
@@ -201,19 +58,11 @@ describe('Data Property Migration', () => {
                     myProp3 = false;
                 }`,
         // Results
-        `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    data() {
-                        const myProp: number = undefined;
-                    
-                        return {
-                            myProp,
-                            myProp2: undefined,
-                            myProp3: false
-                        };
-                    }
-                })`,
+        `import { Ref, ref } from "vue";
+                  const myProp: Ref<number> = ref();
+                  const myProp2 = ref();
+                  const myProp3 = ref(false);
+                `,
       );
     });
 
@@ -239,12 +88,9 @@ describe('Data Property Migration', () => {
                     };
                 }`,
         // Results
-        `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    data() {
-                        const data: SectionData = {
-                                form: {
+        `import { Ref, ref } from "vue";
+                  const data: Ref<SectionData> = ref({
+                            form: {
                                     ref: "tourTranslationVolumeForm",
                                     valid: true,
                                     dialog: {
@@ -258,13 +104,8 @@ describe('Data Property Migration', () => {
                                     language_name: "",
                                     },
                                     },
-                                };
-                                
-                        return {
-                            data
-                        };
-                    }
-                })`,
+                                });
+                    `,
       );
     });
   });

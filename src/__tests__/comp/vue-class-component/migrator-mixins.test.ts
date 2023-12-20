@@ -1,4 +1,4 @@
-import { project, expectMigration, expectMigrationToThrow } from '../../utils';
+import { project, expectMigration, expectMigrationToThrow } from '../utils';
 
 describe('Component extends', () => {
   afterAll(() => {

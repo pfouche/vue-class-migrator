@@ -50,10 +50,7 @@ describe('migrateFile()', () => {
 
       const migratedFile = await migrateFile(project, sourceFile, true)
       expect(migratedFile.getText())
-        .toBe([
-          'import { defineComponent } from "vue";\n',
-          'export default defineComponent({})',
-        ].join('\n'))
+        .toBe([].join('\n'))
     })
 
     test('Non vue import respected', async () => {
@@ -67,8 +64,6 @@ describe('migrateFile()', () => {
       expect(migratedFile.getText())
         .toBe([
           'import Bla, { Blo } from "./blabla"',
-          'import { defineComponent } from "vue";\n',
-          'export default defineComponent({})',
         ].join('\n'))
     })
 
@@ -82,8 +77,7 @@ describe('migrateFile()', () => {
       const migratedFile = await migrateFile(project, sourceFile, true)
       expect(migratedFile.getText())
         .toBe([
-          'import Vue, { mounted, defineComponent } from "vue";',
-          'export default defineComponent({})',
+          'import Vue, { mounted } from "vue";',
         ].join('\n'))
     })
   })

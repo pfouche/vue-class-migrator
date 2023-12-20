@@ -1,4 +1,4 @@
-import { project, expectMigration } from '../../utils';
+import { project, expectMigration } from '../utils';
 
 describe('@Ref', () => {
   afterAll(() => {

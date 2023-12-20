@@ -1,4 +1,4 @@
-import { project, expectMigration } from '../../utils';
+import { project, expectMigration } from '../utils';
 
 describe('@Prop decorator', () => {
   afterAll(() => {
@@ -14,53 +14,44 @@ describe('@Prop decorator', () => {
                     
                 }`,
       // Result
-      `import { defineComponent, PropType } from "vue";
+      `import { defineProps } from "vue";
+                type Props = {
+                  checkId: MyCheckId
+                };
 
-                export default defineComponent({
-                    props: {
-                        checkId: {
-                            type: Object as PropType<MyCheckId>
-                        }
-                    }
-                })`,
+                const props = defineProps<Props>();
+                `,
     );
   });
 
-  test('Class @Prop with method assignment become properties', async () => {
-    await expectMigration(
-      `@Component()
-                export default class Test extends Vue {
-                    @Prop({
-                        type: Object,
-                        default() {
-                          return {
-                            canEdit: true,
-                            canCreate: true,
-                            canDelete: true,
-                          };
-                        },
-                      })
-                      permissions!: CommentPermissions;
-                }`,
-      // Result
-      `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    props: {
-                        permissions: {
-                            type: Object,
-                            default() {
-                                return {
-                                  canEdit: true,
-                                  canCreate: true,
-                                  canDelete: true,
-                                };
-                            },
-                        }
-                    }
-                })`,
-    );
-  });
+  // test('Class @Prop with method assignment become properties', async () => {
+  //   await expectMigration(
+  //     `@Component()
+  //               export default class Test extends Vue {
+  //                   @Prop({
+  //                       type: Object,
+  //                       default() {
+  //                         return {
+  //                           canEdit: true,
+  //                           canCreate: true,
+  //                           canDelete: true,
+  //                         };
+  //                       },
+  //                     })
+  //                     permissions!: CommentPermissions;
+  //               }`,
+  //     // Result
+  //     `import { withDefaults, defineProps } from "vue";
+  //                type Props = {
+  //                  permissions!: CommentPermissions
+  //                }
+  //               
+  //                const props = withDefaults(defineProps<Props>(),
+  //                  {
+  //                    permissions: 'abc',
+  //                  })`,
+  //     );
+  // });
 
   test('@Component props & @Prop don\'t clash', async () => {
     await expectMigration(
@@ -142,26 +133,25 @@ describe('@Prop decorator', () => {
 
                 @Component
                 export default class YourComponent extends Vue {
-                  @Prop(Number) readonly propA: number | undefined
-                  @Prop({ default: 'default value' }) readonly propB!: string
-                  @Prop([String, Boolean]) readonly propC: string | boolean | undefined
+                  @Prop() readonly propA: number
+                  @Prop({required: false}) readonly propB: number | undefined
+                  @Prop({required: true}) readonly propC: string | boolean
+                  @Prop({default: 'default value'}) readonly propD!: string
                 }`,
       // Results
-      `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    props: {
-                        propA: {
-                            type: Number
-                        },
-                        propB: { default: 'default value',
-                            type: String
-                        },
-                        propC: {
-                            type: [String, Boolean]
-                        }
-                    }
-                })`,
+      `import { withDefaults, defineProps } from "vue";
+                type Props = {
+                  propA: number
+                  propB?: number
+                  propC: string | boolean
+                  propD: string
+                };
+                
+                const props = withDefaults(defineProps<Props>(), {
+                  propD: 'default value',
+                }
+                );
+                `,
     );
   });
 

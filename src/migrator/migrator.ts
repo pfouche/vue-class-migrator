@@ -42,9 +42,17 @@ const migrateTsFileToCompositionApi = async (project: Project, sourceFile: Sourc
   try {
     const migrationManager = createCompositionMigrationManager(sourceFile, outFile);
 
-    migrateVueClassComponentToCompositionApi(migrationManager);
     migrateVueClassPropertiesToCompositionApi(migrationManager);
+    migrateVueClassComponentToCompositionApi(migrationManager);
     migrateVuexDecoratorsToCompositionApi(migrationManager);
+    // XXX Remove that when done
+    const mainObjectVariable = outFile
+      .getVariableDeclarations()
+      .filter((decl) => decl.getName() === 'mainObject')
+      .pop()
+
+    mainObjectVariable?.remove()
+
   } catch (error) {
     await outFile.deleteImmediately();
     throw error;

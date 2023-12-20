@@ -1,4 +1,9 @@
-import { project, expectMigration } from '../../utils';
+import {expectMigration, project} from '../utils';
+import {
+  transformFieldValues,
+  transformMethodCalls,
+  transformPropsValues
+} from "../../../migrator/comp/vue-class-component/migrate-methods";
 
 describe('Methods Property Migration', () => {
   afterAll(() => {
@@ -6,7 +11,7 @@ describe('Methods Property Migration', () => {
   });
 
   describe('Class method', () => {
-    test('Special method goes to root', async () => {
+    test('Unsupported class method', async () => {
       await expectMigration(
         `@Component
                 export default class Test extends Vue {
@@ -15,13 +20,24 @@ describe('Methods Property Migration', () => {
                     }
                 }`,
         // Results
-        `import { defineComponent } from "vue";
+        `console.error('MIGRATION_ERROR:Function created() not supported in setup() hook.')`,
+      );
+    });
 
-                export default defineComponent({
-                    created() {
+    test('Special method goes to root', async () => {
+      await expectMigration(
+        `@Component
+                export default class Test extends Vue {
+                    mounted() {
                         console.log("OK");
                     }
-                })`,
+                }`,
+        // Results
+        `import { onMounted } from "vue";
+                  onMounted(() => {
+                        console.log("OK");
+                    }
+                    )`,
       );
     });
 
@@ -29,7 +45,7 @@ describe('Methods Property Migration', () => {
       await expectMigration(
         `@Component
                 export default class Test extends Vue {
-                    created() {
+                    mounted() {
                         console.log("OK");
                     }
                     myMethod(param1: string, p2, p3: any): void {
@@ -37,18 +53,16 @@ describe('Methods Property Migration', () => {
                     }
                 }`,
         // Results
-        `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    created() {
+        `import { onMounted } from "vue";
+                onMounted(() => {
                         console.log("OK");
-                    },
-                    methods: {
-                        myMethod(param1: string, p2, p3: any): void {
-                            console.log("hey")
-                        }
                     }
-                })`,
+                    )
+                    
+                function myMethod(param1: string, p2, p3: any): void {
+                  console.log("hey")
+                  }
+                  `,
       );
     });
 
@@ -56,20 +70,36 @@ describe('Methods Property Migration', () => {
       await expectMigration(
         `@Component
                 export default class Test extends Vue {
-                    myMethod(p1: MyType): number {
-                        return 3;
+                    @Prop
+                    foo!: string
+                    
+                    bar = 'abc'
+                    
+                    method2(): string {
+                      return 'xyz';
+                    }
+                    
+                    method1(p1: string): string {
+                        return p1 + this.foo + this.bar + this.method2();
                     }
                 }`,
         // Results
-        `import { defineComponent } from "vue";
+        `import { defineProps, Ref, ref } from "vue";
+                  type Props = {
+                    foo: string
+                  };
 
-                export default defineComponent({
-                    methods: {
-                        myMethod(p1: MyType): number {
-                            return 3;
-                        }
+                  const props = defineProps<Props>();
+                  const bar = ref('abc');
+                  
+                  function method2(): string {
+                      return 'xyz';
+                  }
+                  
+                  function method1(p1: string): string {
+                        return p1 + props.foo + bar.value + method2();
                     }
-                })`,
+                  `,
       );
     });
   });
@@ -127,6 +157,25 @@ describe('Methods Property Migration', () => {
                     }
                 })`,
       );
+    });
+  });
+
+  describe('Method body replacement', () => {
+    test('method call',  () => {
+      expect(transformMethodCalls('3 + this.foo() + 4')).toBe('3 + foo() + 4')
+      expect(transformMethodCalls('3 + this.foo() + this.bar()')).toBe('3 + foo() + bar()')
+      expect(transformMethodCalls(`this._f26ooAw(56, 'aze')`)).toBe(`_f26ooAw(56, 'aze')`)
+      expect(transformMethodCalls(`this._26ooAw(56, 'aze')`)).toBe(`_26ooAw(56, 'aze')`)
+    });
+    
+    test('props expressions',  () => {
+      expect(transformPropsValues('3 + this.foo + this.bar + this.bat', ['foo', 'bar', 'baz']))
+        .toBe('3 + props.foo + props.bar + this.bat')
+    });
+    
+    test('field expressions',  () => {
+      expect(transformFieldValues('3 + this.foo + this.bar + this.bat', ['foo', 'bar', 'baz']))
+        .toBe('3 + foo.value + bar.value + this.bat')
     });
   });
 });
