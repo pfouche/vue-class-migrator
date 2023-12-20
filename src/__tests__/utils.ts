@@ -1,14 +1,14 @@
-import { randomBytes } from 'crypto';
+import {randomBytes} from 'crypto';
 import {Project, SourceFile} from 'ts-morph';
-import { migrateFile } from '../migrator';
+import {migrateFile} from '../migrator';
 
-export const project = new Project({ useInMemoryFileSystem: true });
+export const project = new Project({useInMemoryFileSystem: true});
 export const createSourceFile = (content = undefined as string | undefined, ext = 'ts') => {
   const randomString = randomBytes(5).toString('hex');
   return project.createSourceFile(`./${randomString}.${ext}`, content);
 };
 
-export const expectMigration = async (sourceCode: string, targetCode: string) : Promise<void> => {
+export const expectMigration = async (sourceCode: string, targetCode: string): Promise<void> => {
   const sourceFile = createSourceFile(sourceCode.replaceAll('  ', ''));
 
   const migratedFile = await migrateFile(project, sourceFile);
@@ -19,7 +19,7 @@ export const expectMigration = async (sourceCode: string, targetCode: string) : 
 export const expectMigrationToThrow = async (
   sourceCode: string,
   errorMessage: string,
-) : Promise<void> => {
+): Promise<void> => {
   const sourceFile = createSourceFile(sourceCode);
   await expect(migrateFile(project, sourceFile))
     .rejects
@@ -37,6 +37,8 @@ export const addVueImport = (outFile: SourceFile, newImport: string) => {
       moduleSpecifier: 'vue',
     });
   } else {
-    vueImport.addNamedImport(newImport);
+    const alreadyImported = vueImport.getNamedImports().find(i => i.getName() === newImport);
+    if (!alreadyImported)
+      vueImport.addNamedImport(newImport);
   }
-}
+};

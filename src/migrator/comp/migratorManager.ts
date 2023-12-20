@@ -1,4 +1,5 @@
 import {
+  ArrowFunction,
   ClassDeclaration,
   Node,
   ObjectLiteralExpression,
@@ -11,8 +12,14 @@ import {
 import {ComputedProps, MigratePartProps} from '../types/migrator';
 import {supportedDecorators} from '../config';
 import getDefineComponentInit from '../migrate-component-decorator';
-import {AddProps} from "./vue-property-decorator/prop";
 import {addVueImport} from "../../__tests__/utils";
+import {
+  transformFieldValues,
+  transformMethodCalls,
+  transformPropsValues
+} from "./vue-class-component/migrate-methods";
+import {AddFunction, AddProps, AddSpecialFunction, AddWatch} from "./types";
+import {extractClassPropertyData, extractPropertiesWithDecorator, unsupported} from "../utils";
 
 export default class MigrationManager {
   private _clazz: ClassDeclaration;
@@ -37,6 +44,10 @@ export default class MigrationManager {
 
   get outFile(): SourceFile {
     return this._outFile;
+  }
+
+  unsupported(msg: string) {
+    unsupported(this.outFile, msg);
   }
 
   addModel(options: {
@@ -110,10 +121,10 @@ export default class MigrationManager {
 
 
   addProps({propsOptions, atLeastOneDefaultValue}: AddProps) {
-    const atLeastOneProp = Object.entries(propsOptions).length > 0
+    const atLeastOneProp = Object.entries(propsOptions).length > 0;
     if (!atLeastOneProp)
-      return
-    
+      return;
+
     // Something like: {foo: string, bar: int}
     const propsType = Object.entries(propsOptions)
       .map(([propName, propOptions]) => {
@@ -121,15 +132,15 @@ export default class MigrationManager {
         const required = propOptions.required;
         // XXX We'd better remove 'undefined' from the union type, if any. 
         // Would be more robust is undefined is not the last term.
-        const correctedTypeName = !required ? typeName?.replace(' | undefined', '') : typeName
+        const correctedTypeName = !required ? typeName?.replace(' | undefined', '') : typeName;
         return `${propName}${required ? '' : '?'}: ${correctedTypeName}`;
       })
       .join('\n');
-    
+
     if (atLeastOneDefaultValue) {
       addVueImport(this.outFile, 'withDefaults');
       addVueImport(this.outFile, 'defineProps');
-      this.outFile.addTypeAlias({name: 'Props', type: `{\n${propsType}\n}`})
+      this.outFile.addTypeAlias({name: 'Props', type: `{\n${propsType}\n}`});
       const defaultValues = Object.entries(propsOptions)
         .filter(([, propOptions]) => propOptions.defaultValue)
         .map(([propName, propOptions]) => {
@@ -140,47 +151,56 @@ export default class MigrationManager {
         writer
           .write(`\nconst props = withDefaults(defineProps<Props>(),`)
           .block(() => writer.write(defaultValues))
-          .write(');')
+          .write(');');
       });
     } else {
       addVueImport(this.outFile, 'defineProps');
-      this.outFile.addTypeAlias({name: 'Props', type: `{\n${propsType}\n}`})
+      this.outFile.addTypeAlias({name: 'Props', type: `{\n${propsType}\n}`});
       this.outFile.addStatements(['\nconst props = defineProps<Props>();']);
     }
   }
 
   addComputedProp(options: ComputedProps) {
-    // const computedObject = getObjectProperty(this.mainObject, 'computed')
-    //
-    // if ('get' in options) {
-    //   const syncPropObject = addPropertyObject(computedObject, options.name)
-    //
-    //   if (options.cache !== undefined) {
-    //     syncPropObject.addPropertyAssignment({
-    //       name: 'cache',
-    //       initializer: `${options.cache}`,
-    //     })
-    //   }
-    //
-    //   syncPropObject.addMethod({
-    //     name: 'get',
-    //     statements: options.get.statements,
-    //     returnType: options.get.returnType,
-    //   })
-    //   if (options.set) {
-    //     syncPropObject.addMethod({
-    //       name: 'set',
-    //       parameters: options.set.parameters,
-    //       statements: options.set.statements,
-    //     })
-    //   }
-    // } else {
-    //   computedObject.addMethod({
-    //     name: options.name,
-    //     returnType: options.returnType,
-    //     statements: options.statements,
-    //   })
-    // }
+    addVueImport(this.outFile, 'computed');
+    if ('get' in options) {
+
+      // if (options.cache !== undefined) {
+      //   syncPropObject.addPropertyAssignment({
+      //     name: 'cache',
+      //     initializer: `${options.cache}`,
+      //   })
+      // }
+      const getBody = this.transformMethodBody(options.get.statements);
+      const setBody = this.transformMethodBody(options.set?.statements);
+
+      this.outFile.addStatements(writer => {
+        const setterParam = options.set?.parameters?.[0];
+        const setterParamType = setterParam?.type;
+        const setterParamTypeText = setterParamType ? `: ${setterParamType}` : '';
+        writer
+          .write(`\nconst ${options.name} = computed(`)
+          .block(() => writer
+            .write(`get()`)
+            .block(() => writer.write(getBody))
+            .write(`,set(${setterParam?.name}${setterParamTypeText}): void`)
+            .block(() => writer.write(setBody)))
+          .write(');');
+      });
+    } else {
+      const body = this.transformMethodBody(options.statements);
+      this.outFile.addStatements(writer => {
+        writer
+          .write(`\nconst ${options.name} = computed(() => `)
+          .block(() => writer.write(body))
+          .write(');');
+      });
+
+      // computedObject.addMethod({
+      //   name: options.name,
+      //   returnType: options.returnType,
+      //   statements: options.statements,
+      // })
+    }
   }
 
   addMethod(options: {
@@ -204,20 +224,44 @@ export default class MigrationManager {
     // })
   }
 
-  addWatch(options: {
-    watchPath: string;
-    watchOptions: string | undefined;
-    handlerMethod: string;
-  }) {
-    // const watchMainObject = getObjectProperty(this.mainObject, 'watch')
-    // const watchPropArray = getArrayProperty(watchMainObject, `"${options.watchPath}"`)
-    // const newWatcher = watchPropArray
-    //   .addElement(options.watchOptions ?? '{}')
-    //   .asKindOrThrow(SyntaxKind.ObjectLiteralExpression)
-    // newWatcher.addPropertyAssignment({
-    //   name: 'handler',
-    //   initializer: `"${options.handlerMethod}"`,
-    // })
+  addSpecialFunction({name, body}: AddSpecialFunction) {
+    addVueImport(this.outFile, name);
+    this.outFile.addStatements(writer =>
+      writer
+        .write(`${name}(() =>`)
+        .block(() => {
+          const transformedBody = this.transformMethodBody(body);
+          writer.write(transformedBody);
+        })
+        .write(')'));
+  }
+
+  addFunction({name, parameters, isAsync, returnType, body}: AddFunction) {
+    this.outFile.addFunction({
+      name,
+      parameters,
+      isAsync,
+      returnType,
+      statements: this.transformMethodBody(body),
+    });
+  }
+
+  addWatch({parameters, options, path, isAsync, body}: AddWatch) {
+    addVueImport(this.outFile, 'watch');
+    const watchGetter = this.createWatchGetter(path);
+    const watchCallback = this.withArrowFunction((arrowFunction => {
+      arrowFunction.addParameters(parameters || []);
+      arrowFunction.setIsAsync(isAsync);
+      arrowFunction.setBodyText(body);
+    }));
+    const watchArgs = [watchGetter, watchCallback];
+    if (options)
+      watchArgs.push(options);
+    this.outFile.addStatements(writer => {
+      writer
+        .newLineIfLastNot()
+        .write(`watch(\n${watchArgs.join(',\n')},\n);`);
+    });
   }
 
   addNamedImport(module: string, namedImport: string) {
@@ -248,6 +292,62 @@ export default class MigrationManager {
     }
 
     return propertyConstructorMapping[propertyType];
+  }
+
+  private transformMethodBody(body: string | undefined) {
+    const propNames = extractPropertiesWithDecorator(this.clazz, 'Prop').map(p => p.getName());
+    const fieldNames = extractClassPropertyData(this.clazz).map(p => p.getName());
+
+    if (!body) return '';
+    let newBody = body;
+    newBody = transformMethodCalls(newBody);
+    newBody = transformPropsValues(newBody, propNames);
+    newBody = transformFieldValues(newBody, fieldNames);
+    return newBody;
+  };
+
+  private createWatchGetter(path: string): string | undefined {
+    const propNames = extractPropertiesWithDecorator(this.clazz, 'Prop').map(p => p.getName());
+    const fieldNames = extractClassPropertyData(this.clazz).map(p => p.getName());
+
+    const segments = path.split('.');
+    const first = segments[0];
+    const rest = segments.slice(1);
+    if (propNames.find(p => p === first)) {
+      // () => props.<path>
+      const exp = ['props', ...segments].join('.');
+      return `() => ${exp}`;
+    } else if (fieldNames.find(p => p === first)) {
+      if (rest.length === 0) {
+        // path is a ref(), so no need for a getter.
+        return path;
+      } else {
+        // () => <first>.value.<rest>
+        const exp = [first, 'value', ...rest].join('.');
+        return `() => ${exp}`;
+      }
+    } else {
+      this.unsupported(`Watched property '${first}' not found.`);
+    }
+  }
+
+  private withArrowFunction(callback: (af: ArrowFunction) => void): string {
+    this.outFile.addVariableStatement({
+        declarations: [{
+          name: '$$temp$$',
+          initializer: `() => {}`,
+        }]
+      }
+    );
+    const temp = this.outFile
+      .getVariableStatementOrThrow('$$temp$$');
+    const arrowFunction = temp
+      .getDeclarations()[0]
+      .getInitializerIfKindOrThrow(SyntaxKind.ArrowFunction);
+    callback(arrowFunction);
+    const result = arrowFunction.getText();
+    temp.remove();
+    return result;
   }
 }
 

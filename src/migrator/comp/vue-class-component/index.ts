@@ -11,6 +11,6 @@ export default (migrationManager: MigrationManager) => {
   migrateExtends(migrationManager.clazz);
   migrateData(migrationManager.clazz, migrationManager.outFile);
   migrateGetters(migrationManager);
-  migrateSetters(migrationManager.clazz, migrationManager.mainObject);
-  migrateMethods(migrationManager.clazz, migrationManager.outFile);
+  // migrateSetters(migrationManager.clazz, migrationManager.mainObject);
+  migrateMethods(migrationManager);
 };

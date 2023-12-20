@@ -12,11 +12,6 @@ export type PropOptions = {
 
 export type PropsOptions = { [key: string]: PropOptions }
 
-export type AddProps = {
-  atLeastOneDefaultValue: boolean,
-  propsOptions: PropsOptions
-}
-
 // @Prop
 export default (migrationManager: MigrationManager) => {
   const {clazz} = migrationManager;

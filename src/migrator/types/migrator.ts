@@ -20,9 +20,9 @@ export type ComputedGetSetOptions = {
     statements?: string;
     returnType?: string;
   },
-  set?: {
+  set: {
     parameters: OptionalKind<ParameterDeclarationStructure>[] | undefined,
-    statements: string;
+    statements?: string;
   }
 };
 

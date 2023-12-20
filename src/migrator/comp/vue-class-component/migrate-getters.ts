@@ -6,14 +6,18 @@ export default (migrationManager: MigrationManager) => {
 
   getters.forEach((getter) => {
     const getterName = getter.getName();
-
-    if (clazz.getSetAccessor(getterName)) {
+    const setter = clazz.getSetAccessor(getterName);
+    if (setter) {
       migrationManager.addComputedProp({
         name: getterName,
         get: {
           returnType: getter.getReturnTypeNode()?.getText(),
           statements: getter.getBodyText(),
         },
+        set: {
+          parameters: setter.getParameters().map((p) => p.getStructure()),
+          statements: setter.getBodyText()
+        }
       });
     } else {
       migrationManager.addComputedProp({

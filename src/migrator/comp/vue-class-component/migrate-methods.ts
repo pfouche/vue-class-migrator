@@ -1,11 +1,11 @@
-import {ClassDeclaration, SourceFile} from 'ts-morph';
-import {extractClassPropertyData, extractPropertiesWithDecorator, unsupported} from '../../utils';
+import {ClassDeclaration} from 'ts-morph';
+import {extractClassPropertyData, extractPropertiesWithDecorator} from '../../utils';
 import {setupSpecialMethods, vueSpecialMethods} from '../../config';
-import {addVueImport} from "../../../__tests__/utils";
+import MigrationManager from "../migratorManager";
 
-export default (clazz: ClassDeclaration, outFile: SourceFile) => {
-  const fieldNames = extractClassPropertyData(clazz).map(p => p.getName());
-  const propNames = extractPropertiesWithDecorator(clazz, 'Prop').map(p => p.getName());
+export default (migrationManager: MigrationManager) => {
+
+  const clazz = migrationManager.clazz;
 
   vueSpecialMethods
     .filter((m) => clazz.getMethod(m))
@@ -14,17 +14,9 @@ export default (clazz: ClassDeclaration, outFile: SourceFile) => {
       const name = method.getName();
       const setupName = setupSpecialMethods[name];
       if (setupName) {
-        addVueImport(outFile, setupName);
-        outFile.addStatements(writer =>
-          writer
-            .write(`${setupName}(() =>`)
-            .block(() => {
-              const body = transformMethodBody(method.getBodyText(), propNames, fieldNames);
-              writer.write(body);
-            })
-            .write(')'));
+        migrationManager.addSpecialFunction({name, body: method.getBodyText()});
       } else {
-        unsupported(outFile, `Function ${name}() not supported in setup() hook.`);
+        migrationManager.unsupported(`Function ${name}() not supported in setup() hook.`);
       }
       // mainObject.addMethod({
       //   name: method.getName(),
@@ -45,16 +37,16 @@ export default (clazz: ClassDeclaration, outFile: SourceFile) => {
   if (methods.length) {
     methods.forEach((method) => {
       if (method.getDecorators().length) {
-        throw new Error(`The method ${method.getName()} has non supported decorators.`);
+        throw new Error(`The method ${method.getName()} has non-supported decorators.`);
       }
 
       const typeNode = method.getReturnTypeNode()?.getText();
-      outFile.addFunction({
+      migrationManager.addFunction({
         name: method.getName(),
         parameters: method.getParameters().map((p) => p.getStructure()),
         isAsync: method.isAsync(),
         returnType: typeNode,
-        statements: transformMethodBody(method.getBodyText(), propNames, fieldNames),
+        body: method.getBodyText(),
       });
       // methodsObject.addMethod({
       //     name: method.getName(),
@@ -102,11 +94,3 @@ export const transformFieldValues = (body: string, fields: string[]): string => 
   return newBody;
 };
 
-export const transformMethodBody = (body: string | undefined, props: string[], fields: string[]) => {
-  if (!body) return '' 
-  let newBody = body;
-  newBody = transformMethodCalls(newBody);
-  newBody = transformPropsValues(newBody, props);
-  newBody = transformFieldValues(newBody, fields);
-  return newBody;
-}; 

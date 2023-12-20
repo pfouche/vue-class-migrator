@@ -5,9 +5,7 @@ import {
 } from 'ts-morph';
 import logger from './logger';
 import {createCompositionMigrationManager} from './comp/migratorManager';
-import migrateVueClassComponentToCompositionApi from './comp/vue-class-component';
-import migrateVueClassPropertiesToCompositionApi from './comp/vue-property-decorator';
-import migrateVuexDecoratorsToCompositionApi from './comp/vuex';
+import migrateVueClassToCompositionApi from './comp';
 import {createMigrationManager} from './migratorManager';
 import migrateVueClassComponent from './vue-class-component';
 import migrateVueClassProperties from './vue-property-decorator';
@@ -42,9 +40,7 @@ const migrateTsFileToCompositionApi = async (project: Project, sourceFile: Sourc
   try {
     const migrationManager = createCompositionMigrationManager(sourceFile, outFile);
 
-    migrateVueClassPropertiesToCompositionApi(migrationManager);
-    migrateVueClassComponentToCompositionApi(migrationManager);
-    migrateVuexDecoratorsToCompositionApi(migrationManager);
+    migrateVueClassToCompositionApi(migrationManager);
     // XXX Remove that when done
     const mainObjectVariable = outFile
       .getVariableDeclarations()

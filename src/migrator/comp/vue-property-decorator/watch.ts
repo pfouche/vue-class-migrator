@@ -1,10 +1,10 @@
-import { Decorator, SyntaxKind } from 'ts-morph';
-import { stringNodeToSTring } from '../../utils';
+import {Decorator, SyntaxKind} from 'ts-morph';
+import {stringNodeToSTring} from '../../utils';
 import type MigrationManager from '../migratorManager';
 
 // @Watcher
 export default (migrationManager: MigrationManager) => {
-  const { clazz } = migrationManager;
+  const {clazz} = migrationManager;
   const watchers = clazz.getMethods().filter((m) => m.getDecorator('Watch'));
 
   watchers.forEach((watcher) => {
@@ -13,26 +13,25 @@ export default (migrationManager: MigrationManager) => {
       .getDecorators()
       .filter((decorator) => decorator.getName() === 'Watch');
 
-    watcherDecorators.forEach((watcherDecorator) => {
-      const decoratorArgs = watcherDecorator.getArguments();
-      const watchPath = stringNodeToSTring(decoratorArgs[0]);
-      const watchOptions = decoratorArgs[1]
-        ?.asKindOrThrow(SyntaxKind.ObjectLiteralExpression)
-        .getText();
+    if (watcherDecorators.length > 1) {
+      migrationManager.unsupported(`Watching multiple properties is not supported: ${watcherName}`);
+      return
+    }
+    
+    const watcherDecorator = watcherDecorators[0];
+    const decoratorArgs = watcherDecorator.getArguments();
+    const watchPath = stringNodeToSTring(decoratorArgs[0]);
+    const watchOptions = decoratorArgs[1]
+      ?.asKindOrThrow(SyntaxKind.ObjectLiteralExpression)
+      .getText();
 
-      migrationManager.addWatch({
-        watchPath,
-        watchOptions,
-        handlerMethod: watcherName,
-      });
-    });
-
-    migrationManager.addMethod({
-      methodName: watcherName,
+    migrationManager.addWatch({
+      path: watchPath,
+      options: watchOptions,
+      handlerMethod: watcherName,
       parameters: watcher.getParameters().map((p) => p.getStructure()),
       isAsync: watcher.isAsync(),
-      returnType: watcher.getReturnTypeNode()?.getText(),
-      statements: watcher.getBodyText() ?? '',
+      body: watcher.getBodyText() ?? '',
     });
   });
 };

@@ -10,19 +10,21 @@ describe('Data Property Migration', () => {
       await expectMigration(
         `@Component
                 export default class Test extends Vue {
+                    foo = 'abc';
+                    
                     get params(): string {
-                        return "hello";
+                        return "hello" + this.foo;
                       }
                 }`,
         // Results
-        `import { defineComponent } from "vue";
-
-                export default defineComponent()
-                
-                const params = computed(() => {
-                    this.$emit("change", p1);
-                });
-                `,
+        `import { ref, computed } from "vue";
+                  const foo = ref('abc');
+                  
+                  const params = computed(() => {
+                    return "hello" + foo.value;
+                  }
+                  );
+                  `,
       );
     });
   });
@@ -57,28 +59,29 @@ describe('Data Property Migration', () => {
       await expectMigration(
         `@Component
                 export default class Test extends Vue {
+                    foo = 'abc';
+                    
                     get params(): string {
                         return "hello";
                     }
                     set params(p1: string): void {
-                        this.$emit("change", p1);
+                        this.foo = p1;
                     }
                 }`,
         // Results
-        `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    computed: {
-                        params: {
-                            get(): string {
-                                return "hello";
-                            },
-                            set(p1: string): void {
-                                this.$emit("change", p1);
-                            }
-                        }
+        `import { ref, computed } from "vue";
+                  const foo = ref('abc');
+                  
+                  const params = computed( {
+                    get() {
+                      return "hello";
                     }
-                })`,
+                    ,set(p1: string): void {
+                      foo.value = p1;
+                    }
+                  }  
+                  );
+                  `,
       );
     });
   });

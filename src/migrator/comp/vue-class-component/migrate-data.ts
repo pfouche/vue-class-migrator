@@ -16,7 +16,9 @@ export default (clazz: ClassDeclaration, outFile: SourceFile) => {
   }
 
   if (classPropertyData.length) {
-    addVueImport(outFile, 'Ref');
+    const atLeastOneType = !!classPropertyData.find(p => p.getTypeNode())
+    if (atLeastOneType) 
+      addVueImport(outFile, 'Ref');
     addVueImport(outFile, 'ref');
     outFile.addStatements(['\n']);
     classPropertyData.forEach((propertyData) => {

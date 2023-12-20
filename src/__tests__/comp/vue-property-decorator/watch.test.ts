@@ -4,56 +4,104 @@ describe('@Watch decorator', () => {
   afterAll(() => {
     project.getSourceFiles().forEach((file) => file.deleteImmediatelySync());
   });
-
-  test('@Watch simple', async () => {
+  
+  test('@Watch attribute', async () => {
     await expectMigration(
       `@Component
                 export default class Test extends Vue {
-                    @Watch('myWatchedProp')
-                    onChildChanged(val: string) { console.log("onChildChanged"); }
+                    att = null
+                    
+                    @Watch('att')
+                    onChanged(val: string) { console.log("onChanged"); }
                 }`,
       // Result
-      `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    watch: {
-                        "myWatchedProp": [{
-                            handler: "onChildChanged"
-                        }]
-                    },
-                    methods: {
-                        onChildChanged(val: string) {
-                            console.log("onChildChanged");
-                        }
-                    }
-                })`,
+      `import { ref, watch } from "vue";
+                const att = ref(null);
+                
+                watch(
+                  att,
+                  (val: string) => {
+                    console.log("onChanged");
+                  },
+                );
+                `,
+    );
+  });
+  
+  test('@Watch with options', async () => {
+    await expectMigration(
+      `@Component
+                export default class Test extends Vue {
+                    att = 'abc'
+                    
+                    @Watch('att', { immediate: true, deep: true })
+                    onChanged(val: string) { console.log("onChanged"); }
+                }`,
+      // Result
+      `import { ref, watch } from "vue";
+                const att = ref('abc');
+                
+                watch(
+                  att,
+                  (val: string) => {
+                    console.log("onChanged");
+                  },
+                  { immediate: true, deep: true },
+                );
+                `,
     );
   });
 
-  test('@Watch simple path', async () => {
+  test('@Watch nested attribute', async () => {
     await expectMigration(
       `@Component
                 export default class Test extends Vue {
-                    @Watch('myWatchedProp.propA')
-                    onChildChanged(val: string, oldVal: string) {
-                        console.log("onChildChanged");
+                    att = {foo: bar}
+                    
+                    @Watch('att.foo')
+                    onChanged(val: string) { console.log("onChanged"); }
+                }`,
+      // Result
+      `import { ref, watch } from "vue";
+                const att = ref({foo: bar});
+                
+                watch(
+                  () => att.value.foo,
+                  (val: string) => {
+                    console.log("onChanged");
+                  },
+                );
+                `,
+    );
+  });
+
+  test('@Watch prop', async () => {
+    await expectMigration(
+      `@Component
+                export default class Test extends Vue {
+                    @Prop
+                    prop1!: string
+                    
+                    @Watch('prop1')
+                    onChanged(val: string, oldVal: string) {
+                        console.log("onChanged");
                     }
                 }`,
       // Result
-      `import { defineComponent } from "vue";
+      `import { defineProps, watch } from "vue";
+                type Props = {
+                  prop1: string
+                };
 
-                export default defineComponent({
-                    watch: {
-                        "myWatchedProp.propA": [{
-                            handler: "onChildChanged"
-                        }]
-                    },
-                    methods: {
-                        onChildChanged(val: string, oldVal: string) {
-                            console.log("onChildChanged");
-                        }
-                    }
-                })`,
+                const props = defineProps<Props>();
+                
+                watch(
+                  () => props.prop1,
+                  (val: string, oldVal: string) => {
+                    console.log("onChanged");
+                  },
+                );
+                `,
     );
   });
 
@@ -61,61 +109,14 @@ describe('@Watch decorator', () => {
     await expectMigration(
       `@Component
                 export default class Test extends Vue {
-                    @Watch('myWatchedPropA')
-                    @Watch('myWatchedPropB')
-                    onChildChanged(val: string, oldVal: string) {
-                        console.log("onChildChanged");
+                    @Watch('prop1')
+                    @Watch('prop2')
+                    onChanged(val: string, oldVal: string) {
+                        console.log("onChanged");
                     }
                 }`,
       // Result
-      `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    watch: {
-                        "myWatchedPropA": [{
-                            handler: "onChildChanged"
-                        }],
-                        "myWatchedPropB": [{
-                            handler: "onChildChanged"
-                        }]
-                    },
-                    methods: {
-                        onChildChanged(val: string, oldVal: string) {
-                            console.log("onChildChanged");
-                        }
-                    }
-                })`,
-    );
-  });
-
-  test('@Watch with property params', async () => {
-    await expectMigration(
-      `@Component
-                export default class Test extends Vue {
-                    @Watch('myWatchedPropA', { immediate: true })
-                    @Watch('myWatchedPropB', { immediate: true, deep: true })
-                    onChildChanged(val: string, oldVal: string) {
-                        console.log("onChildChanged");
-                    }
-                }`,
-      // Result
-      `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    watch: {
-                        "myWatchedPropA": [{ immediate: true,
-                            handler: "onChildChanged"
-                        }],
-                        "myWatchedPropB": [{ immediate: true, deep: true,
-                            handler: "onChildChanged"
-                        }]
-                    },
-                    methods: {
-                        onChildChanged(val: string, oldVal: string) {
-                            console.log("onChildChanged");
-                        }
-                    }
-                })`,
+      `console.error('MIGRATION ERROR: Watching multiple properties is not supported: onChanged')`,
     );
   });
 });
