@@ -24,35 +24,6 @@ describe('@Prop decorator', () => {
     );
   });
 
-  // test('Class @Prop with method assignment become properties', async () => {
-  //   await expectMigration(
-  //     `@Component()
-  //               export default class Test extends Vue {
-  //                   @Prop({
-  //                       type: Object,
-  //                       default() {
-  //                         return {
-  //                           canEdit: true,
-  //                           canCreate: true,
-  //                           canDelete: true,
-  //                         };
-  //                       },
-  //                     })
-  //                     permissions!: CommentPermissions;
-  //               }`,
-  //     // Result
-  //     `import { withDefaults, defineProps } from "vue";
-  //                type Props = {
-  //                  permissions!: CommentPermissions
-  //                }
-  //               
-  //                const props = withDefaults(defineProps<Props>(),
-  //                  {
-  //                    permissions: 'abc',
-  //                  })`,
-  //     );
-  // });
-
   test('@Component props & @Prop don\'t clash', async () => {
     await expectMigration(
       `@Component({
@@ -69,20 +40,15 @@ describe('@Prop decorator', () => {
                     checkId: string;            
                 }`,
       // Result
-      `import { defineComponent } from "vue";
-    
-                export default defineComponent({
-                    props: {
-                        myProp: {
-                            default: true,
-                            required: false,
-                            type: String
-                        },
-                        checkId: {
-                            type: String
-                        }
-                    }
-                })`,
+      `import { defineProps } from "vue";
+                console.error('MIGRATION ERROR: Unsupported @Component option: props')
+                
+                type Props = {
+                  checkId: string
+                };
+                
+                const props = defineProps<Props>();
+                `,
     );
   });
 
@@ -95,15 +61,13 @@ describe('@Prop decorator', () => {
                     
                 }`,
       // Result
-      `import { defineComponent, PropType } from "vue";
-    
-                export default defineComponent({
-                    props: {
-                        checkId: {
-                            type: Array as PropType<MyCheckId[]>
-                        }
-                    }
-                })`,
+      `import { defineProps } from "vue";
+                type Props = {
+                  checkId: MyCheckId[]
+                };
+                
+                const props = defineProps<Props>();
+                `,
     );
   });
 
@@ -115,15 +79,16 @@ describe('@Prop decorator', () => {
                     checkId: MyCheckId;
                 }`,
       // Result
-      `import { defineComponent, PropType } from "vue";
-
-                export default defineComponent({
-                    props: {
-                        checkId: { default: 3,
-                            type: Object as PropType<MyCheckId>
-                        }
-                    }
-                })`,
+      `import { withDefaults, defineProps } from "vue";
+                type Props = {
+                  checkId: MyCheckId
+                };
+                
+                const props = withDefaults(defineProps<Props>(), {
+                  checkId: 3,
+                }
+                );
+                `,
     );
   });
 
@@ -155,7 +120,7 @@ describe('@Prop decorator', () => {
     );
   });
 
-  test('@Prop type collision with typescript prop assigns the @Prop type', async () => {
+  test('@Prop type collision with typescript prop assigns the typescript type', async () => {
     await expectMigration(
       `@Component
                 export default class Test extends Vue {
@@ -163,13 +128,13 @@ describe('@Prop decorator', () => {
                     checkId: MyCheckId;
                 }`,
       // Results
-      `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    props: {
-                        checkId: { type: String }
-                    }
-                })`,
+      `import { defineProps } from "vue";
+                type Props = {
+                  checkId?: MyCheckId
+                };
+                
+                const props = defineProps<Props>();
+                `,
     );
   });
 
@@ -181,13 +146,13 @@ describe('@Prop decorator', () => {
                     checkId: string;
                 }`,
       // Result
-      `import { defineComponent } from "vue";
-    
-                export default defineComponent({
-                    props: {
-                        checkId: { type: String }
-                    }
-                })`,
+      `import { defineProps } from "vue";
+                type Props = {
+                  checkId?: string
+                };
+                
+                const props = defineProps<Props>();
+                `,
     );
   });
 
@@ -199,13 +164,13 @@ describe('@Prop decorator', () => {
                     checkId;
                 }`,
       // Result
-      `import { defineComponent } from "vue";
-    
-                export default defineComponent({
-                    props: {
-                        checkId: { type: String }
-                    }
-                })`,
+      `import { defineProps } from "vue";
+                type Props = {
+                  checkId?: undefined
+                };
+                
+                const props = defineProps<Props>();
+                `,
     );
   });
 });

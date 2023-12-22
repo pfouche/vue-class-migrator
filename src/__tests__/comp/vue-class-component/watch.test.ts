@@ -21,19 +21,7 @@ describe('Component watch', () => {
             export default class Test extends Vue {}`,
 
       // Result
-      `import { defineComponent } from "vue";
-
-            export default defineComponent({
-                watch: {
-                    myWatch: {
-                      handler() {
-                        return '';
-                      },
-                      deep: true,
-                      immediate: true
-                    }
-                }
-            })`,
+      `console.error('MIGRATION ERROR: Unsupported @Component option: watch')`,
     );
   });
 
@@ -45,12 +33,8 @@ describe('Component watch', () => {
             })
             export default class Test extends Vue {}`,
       // Result
-      `import { defineComponent } from "vue";
-
-            export default defineComponent({
-                name: "test",
-                watch: {}
-            })`,
+      `console.error('MIGRATION ERROR: Unsupported @Component option: name')
+                console.error('MIGRATION ERROR: Unsupported @Component option: watch')`,
     );
   });
 });

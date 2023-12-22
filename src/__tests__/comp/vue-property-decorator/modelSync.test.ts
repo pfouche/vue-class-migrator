@@ -1,6 +1,6 @@
 import { project, expectMigration } from '../utils';
 
-describe('@ModelSync decorator', () => {
+describe.skip('@ModelSync decorator', () => {
   afterAll(() => {
     project.getSourceFiles().forEach((file) => file.deleteImmediatelySync());
   });

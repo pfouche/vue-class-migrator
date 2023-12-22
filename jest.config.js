@@ -6,6 +6,7 @@ module.exports = {
     },
     transformIgnorePatterns: ['<rootDir>/node_modules/'],
     testPathIgnorePatterns: [
-      "/__tests__/utils.ts"
+      "/__tests__/utils.ts",
+      "/__tests__/comp/utils.ts"
     ],
   };

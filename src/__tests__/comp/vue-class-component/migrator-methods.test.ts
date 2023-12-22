@@ -20,7 +20,7 @@ describe('Methods Property Migration', () => {
                     }
                 }`,
         // Results
-        `console.error('MIGRATION_ERROR:Function created() not supported in setup() hook.')`,
+        `console.error('MIGRATION ERROR: Function created() not supported in setup() hook.')`,
       );
     });
 
@@ -84,13 +84,14 @@ describe('Methods Property Migration', () => {
                     }
                 }`,
         // Results
-        `import { defineProps, Ref, ref } from "vue";
+        `import { ref, defineProps } from "vue";
+                  const bar = ref('abc');
+                  
                   type Props = {
                     foo: string
                   };
 
                   const props = defineProps<Props>();
-                  const bar = ref('abc');
                   
                   function method2(): string {
                       return 'xyz';
@@ -114,17 +115,7 @@ describe('Methods Property Migration', () => {
                       }
                 }`,
         // Results
-        `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    watch: {
-                        params: {
-                            handler(p1: string): void {
-                                this.$emit("change", p1);
-                            }
-                        }
-                    }
-                })`,
+        `console.error('MIGRATION ERROR: Setter without getter unsupported: params')`,
       );
     });
   });
@@ -142,20 +133,16 @@ describe('Methods Property Migration', () => {
                     }
                 }`,
         // Results
-        `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    computed: {
-                        params: {
-                            get(): string {
-                                return "hello";
-                            },
-                            set(p1: string): void {
-                                this.$emit("change", p1);
-                            }
-                        }
+        `import { computed } from "vue";
+                  const params = computed( {
+                    get() {
+                      return "hello";
                     }
-                })`,
+                    ,set(p1: string): void {
+                      this.$emit("change", p1);
+                  }
+                  }
+                  );`,
       );
     });
   });

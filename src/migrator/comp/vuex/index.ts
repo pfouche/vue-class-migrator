@@ -1,16 +1,8 @@
 import type MigrationManager from '../migratorManager';
-import migrateVuexActions from './actions';
-import migrateVuexGetters from './getters';
-import migrateVuexMutations from './mutations';
+import migrateVuexEntities from './vuexEntities';
 
-export default (migrationManager: MigrationManager) => {
-  migrateVuexActions(migrationManager);
-  migrateVuexGetters(migrationManager);
-  migrateVuexMutations(migrationManager);
-};
+export const migrateVuexStates = (migrationManager: MigrationManager) => migrateVuexEntities(migrationManager, "State");
+export const migrateVuexGetters = (migrationManager: MigrationManager) => migrateVuexEntities(migrationManager, "Getter");
+export const migrateVuexMutations = (migrationManager: MigrationManager) => migrateVuexEntities(migrationManager, "Mutation");
+export const migrateVuexActions = (migrationManager: MigrationManager) => migrateVuexEntities(migrationManager, "Action");
 
-export const supportedPropDecorators = [
-  'Action',
-  'Getter',
-  'Mutation',
-];

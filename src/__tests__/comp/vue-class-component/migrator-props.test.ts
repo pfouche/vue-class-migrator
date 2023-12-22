@@ -17,15 +17,10 @@ describe('Component props', () => {
             export default class Test extends Vue {}`,
 
       // Result
-      `import { defineComponent } from "vue";
-
-            const props = {
-                test: 1
-            };
-
-            export default defineComponent({
-                props
-            })`,
+      `const props = {
+                  test: 1
+                };
+                console.error('MIGRATION ERROR: Unsupported @Component option: props')`,
     );
   });
 
@@ -42,20 +37,9 @@ describe('Component props', () => {
                 }
             })
             export default class Test extends Vue {}`,
-
+      
       // Result
-      `import { defineComponent } from "vue";
-
-            export default defineComponent({
-                props: {
-                    myProp: {
-                        default: true,
-                        required: false,
-                        type: String
-                    },
-                    shortHand
-                }
-            })`,
+      `console.error('MIGRATION ERROR: Unsupported @Component option: props')`,
     );
   });
 
@@ -67,12 +51,8 @@ describe('Component props', () => {
             })
             export default class Test extends Vue {}`,
       // Result
-      `import { defineComponent } from "vue";
-
-            export default defineComponent({
-                name: "test",
-                props: {}
-            })`,
+      `console.error('MIGRATION ERROR: Unsupported @Component option: name')
+                console.error('MIGRATION ERROR: Unsupported @Component option: props')`,
     );
   });
 });

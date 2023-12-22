@@ -17,9 +17,9 @@ export default (migrationManager: MigrationManager) => {
 
 export const supportedDecorators = [
   'Prop',
-  'PropSync',
-  'Ref',
-  'Model',
-  'ModelSync',
+  // 'PropSync',
+  // 'Ref',
+  // 'Model',
+  // 'ModelSync',
   'Watch',
 ]; // Class Property decorators

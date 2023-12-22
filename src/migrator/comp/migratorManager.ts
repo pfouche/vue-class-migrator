@@ -8,18 +8,29 @@ import {
   SourceFile,
   SyntaxKind,
   TypeNode,
+  VariableDeclarationKind,
 } from 'ts-morph';
 import {ComputedProps, MigratePartProps} from '../types/migrator';
-import {supportedDecorators} from '../config';
-import getDefineComponentInit from '../migrate-component-decorator';
+import getDefineComponentInit from './migrate-component-decorator';
 import {addVueImport} from "../../__tests__/utils";
+import {transformFieldValues, transformMethodCalls, transformPropsValues} from "./vue-class-component/migrate-methods";
 import {
-  transformFieldValues,
-  transformMethodCalls,
-  transformPropsValues
-} from "./vue-class-component/migrate-methods";
-import {AddFunction, AddProps, AddSpecialFunction, AddWatch} from "./types";
+  AddFunction,
+  AddProps,
+  AddSpecialFunction,
+  AddVuexEntities,
+  AddWatch,
+  VuexComposable,
+  vuexDecorators
+} from "./types";
 import {extractClassPropertyData, extractPropertiesWithDecorator, unsupported} from "../utils";
+import {supportedDecorators as vueClassPropertyDecorators} from "./vue-property-decorator";
+
+
+export const supportedDecorators = [
+  ...vuexDecorators,
+  ...vueClassPropertyDecorators,
+]; // Class Property decorators
 
 export default class MigrationManager {
   private _clazz: ClassDeclaration;
@@ -202,6 +213,28 @@ export default class MigrationManager {
       // })
     }
   }
+  
+  addVuexEntities(entitiesPerNamepace: AddVuexEntities[], vuexComposable: VuexComposable) {
+    addVueImport(this.outFile, vuexComposable);
+    this.outFile.addStatements(writer => writer.newLineIfLastNot());
+    entitiesPerNamepace.forEach(({namespace, entities}) => {
+      const vuexNames = entities.map(g => `'${g.vuexName}'`).join(', ');
+      const args = namespace ? `'${namespace}', [${vuexNames}]` : `[${vuexNames}]`;
+      const varNames = entities
+        .map(({name, vuexName}) => {
+          return name === vuexName ? name : `${vuexName}: ${name}`;
+        })
+        .join(', ');
+      this.outFile.addVariableStatement({
+        declarationKind: VariableDeclarationKind.Const,
+        declarations: [
+          {
+            name: `{${varNames}}`,
+            initializer: `${vuexComposable}(${args})`
+          },]
+      });
+    });
+  }
 
   addMethod(options: {
     methodName: string;
@@ -379,7 +412,7 @@ export const createCompositionMigrationManager = (
       }
     });
 
-  const defineComponentInitObject = getDefineComponentInit(sourceFileClass);
+  const defineComponentInitObject = getDefineComponentInit(sourceFileClass, outFile);
   let clazzReplacement: string;
   if (!outClazz.getDefaultKeyword()) {
     // Non default exported class

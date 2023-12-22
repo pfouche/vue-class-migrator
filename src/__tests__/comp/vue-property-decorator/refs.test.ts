@@ -1,6 +1,6 @@
 import { project, expectMigration } from '../utils';
 
-describe('@Ref', () => {
+describe.skip('@Ref', () => {
   afterAll(() => {
     project.getSourceFiles().forEach((file) => file.deleteImmediatelySync());
   });

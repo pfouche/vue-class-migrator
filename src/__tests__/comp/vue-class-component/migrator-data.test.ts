@@ -18,18 +18,21 @@ describe('Data Property Migration', () => {
                 })
                 export default class Test extends Vue {}`,
         // Throws
-        `console.error('MIGRATION ERROR: Having a class with @Component({data(): ...} or a data() method is not supported.')`,
+        `console.error('MIGRATION ERROR: Unsupported @Component option: data')
+                  console.error('MIGRATION ERROR: Having a class with @Component({data(): ...} or a data() method is not supported.')`,
       );
     });
 
     test('@Component data unsupported', async () => {
-      await expectMigrationToThrow(
+      await expectMigration(
         `@Component({
                     data,
                 })
                 export default class Test extends Vue {}`,
         // Throws
-        '@Component Data prop should be an object or a method. Type: ShorthandPropertyAssignment',
+        `console.error('MIGRATION ERROR: @Component Data prop should be an object or a method. Type: ShorthandPropertyAssignment')
+                  console.error('MIGRATION ERROR: Unsupported @Component option: data')
+                  console.error('MIGRATION ERROR: Having a class with @Component({data(): ...} or a data() method is not supported.')`,
       );
     });
 

@@ -10,30 +10,35 @@ import migrateModels from "./vue-property-decorator/model";
 import migrateModelSyncs from "./vue-property-decorator/modelSync";
 import migrateRefs from "./vue-property-decorator/ref";
 import migrateWatchers from "./vue-property-decorator/watch";
-import migrateVuexActions from "./vuex/actions";
-import migrateVuexGetters from "./vuex/getters";
-import migrateVuexMutations from "./vuex/mutations";
+import {migrateVuexActions, migrateVuexGetters, migrateVuexMutations, migrateVuexStates} from "./vuex";
+import checkComponent from "./vue-class-component/check-component";
+import migrateSetters from "./vue-class-component/migrate-setters";
 
 
 export default (migrationManager: MigrationManager) => {
+  checkComponent(migrationManager)
+  
   migrateImports(migrationManager.outFile);
-  migrateExtends(migrationManager.clazz);
+  migrateExtends(migrationManager);
 
   migrateData(migrationManager.clazz, migrationManager.outFile);
   migrateProps(migrationManager);
   migratePropSyncs(migrationManager);
   migrateModels(migrationManager);
   migrateModelSyncs(migrationManager);
+  
+  migrateVuexStates(migrationManager);
 
   migrateRefs(migrationManager);
 
   migrateGetters(migrationManager);
+  migrateSetters(migrationManager);
   migrateVuexGetters(migrationManager);
 
   migrateWatchers(migrationManager);
   
-  migrateVuexActions(migrationManager);
   migrateVuexMutations(migrationManager);
+  migrateVuexActions(migrationManager);
 
   migrateMethods(migrationManager);
 };

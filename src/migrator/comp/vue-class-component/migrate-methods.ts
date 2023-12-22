@@ -14,7 +14,7 @@ export default (migrationManager: MigrationManager) => {
       const name = method.getName();
       const setupName = setupSpecialMethods[name];
       if (setupName) {
-        migrationManager.addSpecialFunction({name, body: method.getBodyText()});
+        migrationManager.addSpecialFunction({name: setupName, body: method.getBodyText()});
       } else {
         migrationManager.unsupported(`Function ${name}() not supported in setup() hook.`);
       }

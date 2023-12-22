@@ -28,4 +28,28 @@ export type AddFunction =
     isAsync: boolean;
     returnType: string | undefined
     body: string | undefined
-  }; 
+  };
+
+export const vuexDecorators = ['State', 'Getter', 'Mutation', 'Action'] as const
+export const vuexComposables = ['useStates', 'useGetters', 'useMutations', 'useActions'] as const
+
+export type VuexDecorator = typeof vuexDecorators[number] 
+export type VuexComposable = typeof vuexComposables[number] 
+
+export type VuexEntities = {[id in VuexDecorator]: VuexComposable}
+
+export const vuexEntities:VuexEntities = {
+  State: 'useStates',
+  Getter: 'useGetters',
+  Mutation: 'useMutations',
+  Action: 'useActions',
+}
+
+export type AddVuexEntities = {
+  namespace: string;
+  entities:
+    {
+      name: string
+      vuexName: string
+    }[]
+}

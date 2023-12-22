@@ -30,7 +30,7 @@ describe('Data Property Migration', () => {
   });
 
   describe('Class setter', () => {
-    test('Class set becomes watch property', async () => {
+    test('Class set unsupported', async () => {
       await expectMigration(
         `@Component
                 export default class Test extends Vue {
@@ -39,17 +39,7 @@ describe('Data Property Migration', () => {
                       }
                 }`,
         // Results
-        `import { defineComponent } from "vue";
-
-                export default defineComponent({
-                    watch: {
-                        params: {
-                            handler(p1: string): void {
-                                this.$emit("change", p1);
-                            }
-                        }
-                    }
-                })`,
+        `console.error('MIGRATION ERROR: Setter without getter unsupported: params')`,
       );
     });
   });

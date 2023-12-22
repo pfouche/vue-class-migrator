@@ -10,8 +10,7 @@ describe('@Component decorator', () => {
       `@Component({})
             export default class Test {}
             `,
-      `const mainObject = {}
-      `,
+      ``,
     );
   });
 
@@ -21,39 +20,30 @@ describe('@Component decorator', () => {
             export default class Test {}
             `,
       // Result
-      `const mainObject = {}
-      `,
+      ``,
     );
   });
 
-  test('@Component mixins become mixins property', async () => {
+  test('@Component mixins unsupported', async () => {
     await expectMigration(
       `@Component({
                 mixins: [A,B,C]
             })
             export default class Test {}`,
       // Result
-      `import { defineComponent } from "vue";
-
-            export default defineComponent({
-                mixins: [A,B,C]
-            })`,
+      `console.error('MIGRATION ERROR: Unsupported @Component option: mixins')`,
     );
   });
 
-  test('@Component mixins and class extending is supported', async () => {
+  test('@Component mixins and class extending is unsupported', async () => {
     await expectMigration(
       `@Component({
                 mixins: [A,B,C]
             })
             export default class Test extends AnotherClass {}`,
       // Result
-      `import { defineComponent } from "vue";
-
-            export default defineComponent({
-                mixins: [A,B,C],
-                extends: AnotherClass
-            })`,
+      `console.error('MIGRATION ERROR: Unsupported @Component option: mixins')
+                console.error('MIGRATION ERROR: This component is extending from a class different form Vue. This is not supported.')`,
     );
   });
 
@@ -69,9 +59,9 @@ describe('@Component decorator', () => {
     );
   });
 
-  test('@Component all assignment variatons supported', async () => {
+  test('@Component all assignment variations unsupported', async () => {
     await expectMigration(
-      `const beforeCreate = () => {};
+      `
             @Component({
                 beforeCreate,
                 beforeMount() { console.log("beforeMount"); },
@@ -85,20 +75,14 @@ describe('@Component decorator', () => {
             })
             export default class Test extends Vue {}`,
       // Result
-      `import { defineComponent } from "vue";
-
-            const beforeCreate = () => {};
-            export default defineComponent({
-                beforeCreate,
-                beforeMount() { console.log("beforeMount"); },
-                beforeDestroy: () => { console.log("beforeDestroy"); },
-                beforeUpdate: function() { console.log("beforeUpdate"); },
-                data: () => {},
-                methods: {
-                  demo(p1: string) {}
-                },
-                mixins: [A,B,C]
-            })`,
+      `console.error('MIGRATION ERROR: Unsupported @Component option: beforeCreate')
+                console.error('MIGRATION ERROR: Unsupported @Component option: beforeMount')
+                console.error('MIGRATION ERROR: Unsupported @Component option: beforeDestroy')
+                console.error('MIGRATION ERROR: Unsupported @Component option: beforeUpdate')
+                console.error('MIGRATION ERROR: Unsupported @Component option: data')
+                console.error('MIGRATION ERROR: Unsupported @Component option: methods')
+                console.error('MIGRATION ERROR: Unsupported @Component option: mixins')
+                console.error('MIGRATION ERROR: Having a class with @Component({data(): ...} or a data() method is not supported.')`,
     );
   });
 });
