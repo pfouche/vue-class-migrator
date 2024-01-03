@@ -9,4 +9,5 @@ module.exports = {
       "/__tests__/utils.ts",
       "/__tests__/comp/utils.ts"
     ],
+    setupFilesAfterEnv: ["jest-extended/all"]
   };

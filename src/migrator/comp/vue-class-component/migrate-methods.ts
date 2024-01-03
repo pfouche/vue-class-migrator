@@ -101,7 +101,7 @@ export const transformFieldValues = (body: string, fields: string[]): string => 
  *
  * @param body a method body
  */
-export const transformRoutingValues = (body: string, routingUsage: RoutingUsage): string => {
+export const transformRoutingCalls = (body: string, routingUsage: RoutingUsage): string => {
   // Note: Creating additional variables such as 'const route = useRoute()' would be too complex.
   // Plus, it would add a collision risk if a variable 'route' was already defined.
   const newBody1 = body.replaceAll(`this.$router`, `useRouter()`);
@@ -109,5 +109,18 @@ export const transformRoutingValues = (body: string, routingUsage: RoutingUsage)
   const newBody2 = newBody1.replaceAll(`this.$route`, `useRoute()`);
   if (newBody2 !== newBody1) routingUsage.useRoute = true;
   return newBody2;
+};
+
+
+/**
+ * Replaces class-style 'emit' expressions with setup-style expression
+ * Replaces 'this.$emit(' with 'emit('.
+ * The emit function is created in the migrate-emits phase.
+ *
+ * @param body a method body
+ */
+export const transformEmitCalls = (body: string): string => {
+  const newBody = body.replaceAll(`this.$emit(`, `emit(`);
+  return newBody;
 };
 

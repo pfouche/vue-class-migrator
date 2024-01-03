@@ -151,7 +151,7 @@ describe('Methods Property Migration', () => {
         `@Component
                 export default class Test extends Vue {
                     set params(p1: string): void {
-                        this.$emit("change", p1);
+                        console.log(p1);
                       }
                 }`,
         // Results
@@ -173,16 +173,20 @@ describe('Methods Property Migration', () => {
                     }
                 }`,
         // Results
-        `import { computed } from "vue";
+        `import { defineEmits, computed } from "vue";
+                  const emit = defineEmits(['change']);
+                  
                   const params = computed( {
                     get() {
                       return "hello";
                     }
                     ,set(p1: string): void {
-                      this.$emit("change", p1);
+                      emit("change", p1);
                   }
                   }
-                  );`,
+                  );
+                  
+                  `,
       );
     });
   });

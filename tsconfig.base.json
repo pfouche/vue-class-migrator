@@ -8,6 +8,10 @@
       "esModuleInterop": true,
       "moduleResolution": "node",
       "lib": ["es2021"]
-    }
-  }
+    },
+  "files": [
+    "node_modules/jest-extended/types/index.d.ts",
+    "global.d.ts"
+  ]
+}
   

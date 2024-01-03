@@ -13,6 +13,7 @@ import migrateWatchers from "./vue-property-decorator/watch";
 import {migrateVuexActions, migrateVuexGetters, migrateVuexMutations, migrateVuexStates} from "./vuex";
 import checkComponent from "./vue-class-component/check-component";
 import migrateSetters from "./vue-class-component/migrate-setters";
+import migrateEmits from "./vue-class-component/migrate-emits";
 
 
 export default (migrationManager: MigrationManager) => {
@@ -25,6 +26,8 @@ export default (migrationManager: MigrationManager) => {
   migratePropSyncs(migrationManager);
   migrateModels(migrationManager);
   migrateModelSyncs(migrationManager);
+  
+  migrateEmits(migrationManager)
   
   migrateData(migrationManager.clazz, migrationManager.outFile);
   

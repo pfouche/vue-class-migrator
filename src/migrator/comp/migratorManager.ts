@@ -14,10 +14,11 @@ import {ComputedProps, MigratePartProps} from '../types/migrator';
 import getDefineComponentInit from './migrate-component-decorator';
 import {addVueImport, addVueRouterImport, addVuexImport} from "../../__tests__/utils";
 import {
+  transformEmitCalls,
   transformFieldValues,
   transformMethodCalls,
   transformPropsValues,
-  transformRoutingValues
+  transformRoutingCalls
 } from "./vue-class-component/migrate-methods";
 import {
   AddFunction,
@@ -174,6 +175,16 @@ export default class MigrationManager {
       this.outFile.addTypeAlias({name: 'Props', type: `{\n${propsType}\n}`});
       this.outFile.addStatements(['\nconst props = defineProps<Props>();']);
     }
+  }
+  
+
+  addEmits(events: string[]) {
+    addVueImport(this.outFile, 'defineEmits');
+
+    const eventsArg = events.map(e => `'${e}'`).join(', ')
+
+    this.outFile.addStatements(writer => writer.newLineIfLastNot());
+    this.outFile.addStatements([`const emit = defineEmits([${eventsArg}]);`]);
   }
 
   addComputedProp(options: ComputedProps) {
@@ -342,7 +353,8 @@ export default class MigrationManager {
     newBody = transformFieldValues(newBody, computedNames);
     newBody = transformFieldValues(newBody, stateNames);
     newBody = transformFieldValues(newBody, getterNames);
-    newBody = transformRoutingValues(newBody, routingUsage);
+    newBody = transformRoutingCalls(newBody, routingUsage);
+    newBody = transformEmitCalls(newBody);
     
     if (routingUsage.useRouter) addVueRouterImport(this.outFile, 'useRouter')
     if (routingUsage.useRoute) addVueRouterImport(this.outFile, 'useRoute')

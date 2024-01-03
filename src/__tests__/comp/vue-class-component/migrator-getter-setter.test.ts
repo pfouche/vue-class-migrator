@@ -35,7 +35,7 @@ describe('Data Property Migration', () => {
         `@Component
                 export default class Test extends Vue {
                     set params(p1: string): void {
-                        this.$emit("change", p1);
+                        console.log(p1);
                       }
                 }`,
         // Results
