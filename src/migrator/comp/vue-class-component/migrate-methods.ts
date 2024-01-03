@@ -2,6 +2,7 @@ import {ClassDeclaration} from 'ts-morph';
 import {extractClassPropertyData, extractPropertiesWithDecorator} from '../../utils';
 import {setupSpecialMethods, vueSpecialMethods} from '../../config';
 import MigrationManager from "../migratorManager";
+import {RoutingUsage} from "../types";
 
 export default (migrationManager: MigrationManager) => {
 
@@ -92,5 +93,21 @@ export const transformFieldValues = (body: string, fields: string[]): string => 
   let newBody = body;
   fields.forEach(p => newBody = newBody.replaceAll(`this.${p}`, `${p}.value`));
   return newBody;
+};
+
+/**
+ * Replaces class-style route and router expressions with setup-style expression
+ * Replaces 'this.$route' with 'useRoute()' and 'this.$router' with 'useRouter()'.
+ *
+ * @param body a method body
+ */
+export const transformRoutingValues = (body: string, routingUsage: RoutingUsage): string => {
+  // Note: Creating additional variables such as 'const route = useRoute()' would be too complex.
+  // Plus, it would add a collision risk if a variable 'route' was already defined.
+  const newBody1 = body.replaceAll(`this.$router`, `useRouter()`);
+  if (newBody1 !== body) routingUsage.useRouter = true;
+  const newBody2 = newBody1.replaceAll(`this.$route`, `useRoute()`);
+  if (newBody2 !== newBody1) routingUsage.useRoute = true;
+  return newBody2;
 };
 

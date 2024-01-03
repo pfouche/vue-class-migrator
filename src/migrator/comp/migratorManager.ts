@@ -12,14 +12,19 @@ import {
 } from 'ts-morph';
 import {ComputedProps, MigratePartProps} from '../types/migrator';
 import getDefineComponentInit from './migrate-component-decorator';
-import {addVueImport, addVuexImport} from "../../__tests__/utils";
-import {transformFieldValues, transformMethodCalls, transformPropsValues} from "./vue-class-component/migrate-methods";
+import {addVueImport, addVueRouterImport, addVuexImport} from "../../__tests__/utils";
+import {
+  transformFieldValues,
+  transformMethodCalls,
+  transformPropsValues,
+  transformRoutingValues
+} from "./vue-class-component/migrate-methods";
 import {
   AddFunction,
   AddProps,
   AddSpecialFunction,
   AddVuexEntities,
-  AddWatch,
+  AddWatch, RoutingUsage,
   VuexComposable,
   vuexDecorators
 } from "./types";
@@ -324,16 +329,23 @@ export default class MigrationManager {
   private transformMethodBody(body: string | undefined) {
     const propNames = extractPropertiesWithDecorator(this.clazz, 'Prop').map(p => p.getName());
     const fieldNames = extractClassPropertyData(this.clazz).map(p => p.getName());
+    const computedNames = this.clazz.getGetAccessors().map(acc => acc.getName())
     const stateNames = extractPropertiesWithDecorator(this.clazz, 'State').map(p => p.getName());
     const getterNames = extractPropertiesWithDecorator(this.clazz, 'Getter').map(p => p.getName());
+    const routingUsage: RoutingUsage = {useRoute: false, useRouter: false}
 
     if (!body) return '';
     let newBody = body;
     newBody = transformMethodCalls(newBody);
     newBody = transformPropsValues(newBody, propNames);
     newBody = transformFieldValues(newBody, fieldNames);
+    newBody = transformFieldValues(newBody, computedNames);
     newBody = transformFieldValues(newBody, stateNames);
     newBody = transformFieldValues(newBody, getterNames);
+    newBody = transformRoutingValues(newBody, routingUsage);
+    
+    if (routingUsage.useRouter) addVueRouterImport(this.outFile, 'useRouter')
+    if (routingUsage.useRoute) addVueRouterImport(this.outFile, 'useRoute')
     return newBody;
   };
 

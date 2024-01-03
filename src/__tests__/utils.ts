@@ -34,6 +34,10 @@ export const addVuexImport = (outFile: SourceFile, newImport: string) => {
  addVueOrVuexImport(outFile, newImport, 'vuex-composition-helpers')
 };
 
+export const addVueRouterImport = (outFile: SourceFile, newImport: string) => {
+  addVueOrVuexImport(outFile, newImport, 'vue-router/composables');
+};
+
 export const addVueOrVuexImport = (outFile: SourceFile, newImport: string, module: string) => {
   const vueImport = outFile.getImportDeclaration(
     (importDeclaration) => importDeclaration.getModuleSpecifierValue() === module,

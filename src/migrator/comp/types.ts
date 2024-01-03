@@ -53,3 +53,8 @@ export type AddVuexEntities = {
       vuexName: string
     }[]
 }
+
+export type RoutingUsage = {
+  useRoute: boolean
+  useRouter: boolean
+}

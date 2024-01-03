@@ -75,19 +75,22 @@ describe('Methods Property Migration', () => {
                     @State
                     baz:! any
                     
-                    
                     bar = 'abc'
+                    
+                    get bat() {
+                      return 'def'
+                    }  
                     
                     method2(): string {
                       return 'xyz';
                     }
                     
                     method1(p1: string): string {
-                        return p1 + this.foo + this.bar + this.baz.xyz + this.method2();
+                        return p1 + this.foo + this.bar + this.bat + this.baz.xyz + this.method2();
                     }
                 }`,
         // Results
-        `import { defineProps, ref } from "vue";
+        `import { defineProps, ref, computed } from "vue";
                   import { useState } from "vuex-composition-helpers";
                   type Props = {
                     foo: string
@@ -96,17 +99,50 @@ describe('Methods Property Migration', () => {
                   const props = defineProps<Props>();
                   const bar = ref('abc');
                   const {baz} = useState(['baz']);
+
+                  const bat = computed(() => {
+                    return 'def'
+                  }
+                  );
                   
                   function method2(): string {
                       return 'xyz';
                   }
                   
                   function method1(p1: string): string {
-                        return p1 + props.foo + bar.value + baz.value.xyz + method2();
+                        return p1 + props.foo + bar.value + bat.value + baz.value.xyz + method2();
                     }
                   `,
       );
     });
+  });
+
+
+  test('Router', async () => {
+    await expectMigration(
+      `@Component
+                export default class Test extends Vue {
+                    get currentRoute() {
+                      return this.$route
+                    }  
+                    
+                    m1() {
+                      this.$router.push({name: 'otherRoute'})
+                    }
+                }`,
+      // Results
+      `import { computed } from "vue";
+                import { useRoute, useRouter } from "vue-router/composables";
+                const currentRoute = computed(() => {
+                  return useRoute()
+                }
+                );
+                
+                function m1() {
+                  useRouter().push({name: 'otherRoute'})
+                }
+                `,
+    );
   });
 
   describe('Class setter', () => {
