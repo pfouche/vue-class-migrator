@@ -10,18 +10,20 @@ describe('@Watch decorator', () => {
       `@Component
                 export default class Test extends Vue {
                     att = null
+                    foo = 'bar'
                     
                     @Watch('att')
-                    onChanged(val: string) { console.log("onChanged"); }
+                    onChanged(val: string) { console.log(this.foo + this.att); }
                 }`,
       // Result
       `import { ref, watch } from "vue";
                 const att = ref(null);
+                const foo = ref('bar');
                 
                 watch(
                   att,
                   (val: string) => {
-                    console.log("onChanged");
+                    console.log(foo.value + att.value);
                   },
                 );
                 `,

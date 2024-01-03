@@ -21,11 +21,12 @@ export default (migrationManager: MigrationManager) => {
   migrateImports(migrationManager.outFile);
   migrateExtends(migrationManager);
 
-  migrateData(migrationManager.clazz, migrationManager.outFile);
   migrateProps(migrationManager);
   migratePropSyncs(migrationManager);
   migrateModels(migrationManager);
   migrateModelSyncs(migrationManager);
+  
+  migrateData(migrationManager.clazz, migrationManager.outFile);
   
   migrateVuexStates(migrationManager);
 

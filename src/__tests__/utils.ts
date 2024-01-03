@@ -27,14 +27,22 @@ export const expectMigrationToThrow = async (
 };
 
 export const addVueImport = (outFile: SourceFile, newImport: string) => {
+  addVueOrVuexImport(outFile, newImport, 'vue')
+};
+
+export const addVuexImport = (outFile: SourceFile, newImport: string) => {
+ addVueOrVuexImport(outFile, newImport, 'vuex-composition-helpers')
+};
+
+export const addVueOrVuexImport = (outFile: SourceFile, newImport: string, module: string) => {
   const vueImport = outFile.getImportDeclaration(
-    (importDeclaration) => importDeclaration.getModuleSpecifierValue() === 'vue',
+    (importDeclaration) => importDeclaration.getModuleSpecifierValue() === module,
   );
 
   if (!vueImport) {
     outFile.addImportDeclaration({
       defaultImport: `{ ${newImport} }`,
-      moduleSpecifier: 'vue',
+      moduleSpecifier: module,
     });
   } else {
     const alreadyImported = vueImport.getNamedImports().find(i => i.getName() === newImport);

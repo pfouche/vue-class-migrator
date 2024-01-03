@@ -6,6 +6,7 @@ import type {
   Node, SourceFile,
 } from 'ts-morph';
 import {SyntaxKind} from 'ts-morph';
+import logger from "./logger";
 
 export const addPropertyObject = (mainObject: ObjectLiteralExpression, propName: string, initializer = '{}'): ObjectLiteralExpression => mainObject
   .addPropertyAssignment({
@@ -69,5 +70,7 @@ export const stringNodeToSTring = (node: Node): string => {
 };
 
 export const unsupported = (outFile: SourceFile, msg: string) => {
-  outFile.addStatements([`console.error('MIGRATION ERROR: ${msg}')`]);
+  const m = `MIGRATION ERROR: ${msg}`;
+  outFile.addStatements([`console.error('${m}')`]);
+  logger.warn(m)
 }; 

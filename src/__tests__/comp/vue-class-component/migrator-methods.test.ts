@@ -72,6 +72,9 @@ describe('Methods Property Migration', () => {
                 export default class Test extends Vue {
                     @Prop
                     foo!: string
+                    @State
+                    baz:! any
+                    
                     
                     bar = 'abc'
                     
@@ -80,25 +83,26 @@ describe('Methods Property Migration', () => {
                     }
                     
                     method1(p1: string): string {
-                        return p1 + this.foo + this.bar + this.method2();
+                        return p1 + this.foo + this.bar + this.baz.xyz + this.method2();
                     }
                 }`,
         // Results
-        `import { ref, defineProps } from "vue";
-                  const bar = ref('abc');
-                  
+        `import { defineProps, ref } from "vue";
+                  import { useState } from "vuex-composition-helpers";
                   type Props = {
                     foo: string
                   };
 
                   const props = defineProps<Props>();
+                  const bar = ref('abc');
+                  const {baz} = useState(['baz']);
                   
                   function method2(): string {
                       return 'xyz';
                   }
                   
                   function method1(p1: string): string {
-                        return p1 + props.foo + bar.value + method2();
+                        return p1 + props.foo + bar.value + baz.value.xyz + method2();
                     }
                   `,
       );

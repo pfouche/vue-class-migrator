@@ -37,7 +37,7 @@ export default (migrationManager: MigrationManager) => {
   if (methods.length) {
     methods.forEach((method) => {
       if (method.getDecorators().length) {
-        throw new Error(`The method ${method.getName()} has non-supported decorators.`);
+        migrationManager.unsupported(`Method ${method.getName()} has non-supported decorators.`);
       }
 
       const typeNode = method.getReturnTypeNode()?.getText();

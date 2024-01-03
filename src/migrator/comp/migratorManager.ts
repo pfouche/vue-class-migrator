@@ -12,7 +12,7 @@ import {
 } from 'ts-morph';
 import {ComputedProps, MigratePartProps} from '../types/migrator';
 import getDefineComponentInit from './migrate-component-decorator';
-import {addVueImport} from "../../__tests__/utils";
+import {addVueImport, addVuexImport} from "../../__tests__/utils";
 import {transformFieldValues, transformMethodCalls, transformPropsValues} from "./vue-class-component/migrate-methods";
 import {
   AddFunction,
@@ -174,18 +174,12 @@ export default class MigrationManager {
   addComputedProp(options: ComputedProps) {
     addVueImport(this.outFile, 'computed');
     if ('get' in options) {
-
-      // if (options.cache !== undefined) {
-      //   syncPropObject.addPropertyAssignment({
-      //     name: 'cache',
-      //     initializer: `${options.cache}`,
-      //   })
-      // }
+      // getter and setter
       const getBody = this.transformMethodBody(options.get.statements);
-      const setBody = this.transformMethodBody(options.set?.statements);
+      const setBody = this.transformMethodBody(options.set.statements);
 
       this.outFile.addStatements(writer => {
-        const setterParam = options.set?.parameters?.[0];
+        const setterParam = options.set.parameters?.[0];
         const setterParamType = setterParam?.type;
         const setterParamTypeText = setterParamType ? `: ${setterParamType}` : '';
         writer
@@ -213,9 +207,9 @@ export default class MigrationManager {
       // })
     }
   }
-  
+
   addVuexEntities(entitiesPerNamepace: AddVuexEntities[], vuexComposable: VuexComposable) {
-    addVueImport(this.outFile, vuexComposable);
+    addVuexImport(this.outFile, vuexComposable);
     this.outFile.addStatements(writer => writer.newLineIfLastNot());
     entitiesPerNamepace.forEach(({namespace, entities}) => {
       const vuexNames = entities.map(g => `'${g.vuexName}'`).join(', ');
@@ -285,7 +279,7 @@ export default class MigrationManager {
     const watchCallback = this.withArrowFunction((arrowFunction => {
       arrowFunction.addParameters(parameters || []);
       arrowFunction.setIsAsync(isAsync);
-      arrowFunction.setBodyText(body);
+      arrowFunction.setBodyText(this.transformMethodBody(body));
     }));
     const watchArgs = [watchGetter, watchCallback];
     if (options)
@@ -330,12 +324,16 @@ export default class MigrationManager {
   private transformMethodBody(body: string | undefined) {
     const propNames = extractPropertiesWithDecorator(this.clazz, 'Prop').map(p => p.getName());
     const fieldNames = extractClassPropertyData(this.clazz).map(p => p.getName());
+    const stateNames = extractPropertiesWithDecorator(this.clazz, 'State').map(p => p.getName());
+    const getterNames = extractPropertiesWithDecorator(this.clazz, 'Getter').map(p => p.getName());
 
     if (!body) return '';
     let newBody = body;
     newBody = transformMethodCalls(newBody);
     newBody = transformPropsValues(newBody, propNames);
     newBody = transformFieldValues(newBody, fieldNames);
+    newBody = transformFieldValues(newBody, stateNames);
+    newBody = transformFieldValues(newBody, getterNames);
     return newBody;
   };
 

@@ -31,7 +31,7 @@ export type AddFunction =
   };
 
 export const vuexDecorators = ['State', 'Getter', 'Mutation', 'Action'] as const
-export const vuexComposables = ['useStates', 'useGetters', 'useMutations', 'useActions'] as const
+export const vuexComposables = ['useState', 'useGetters', 'useMutations', 'useActions'] as const
 
 export type VuexDecorator = typeof vuexDecorators[number] 
 export type VuexComposable = typeof vuexComposables[number] 
@@ -39,7 +39,7 @@ export type VuexComposable = typeof vuexComposables[number]
 export type VuexEntities = {[id in VuexDecorator]: VuexComposable}
 
 export const vuexEntities:VuexEntities = {
-  State: 'useStates',
+  State: 'useState',
   Getter: 'useGetters',
   Mutation: 'useMutations',
   Action: 'useActions',
