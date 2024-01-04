@@ -22,4 +22,8 @@ export const supportedDecorators = [
   // 'Model',
   // 'ModelSync',
   'Watch',
+  'Provide',
+  'ProvideReactive',
+  'Inject',
+  'InjectReactive',
 ]; // Class Property decorators

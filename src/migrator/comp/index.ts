@@ -14,6 +14,8 @@ import {migrateVuexActions, migrateVuexGetters, migrateVuexMutations, migrateVue
 import checkComponent from "./vue-class-component/check-component";
 import migrateSetters from "./vue-class-component/migrate-setters";
 import migrateEmits from "./vue-class-component/migrate-emits";
+import migrateProvide from "./vue-property-decorator/provide";
+import migrateInject from "./vue-property-decorator/inject";
 
 
 export default (migrationManager: MigrationManager) => {
@@ -28,6 +30,8 @@ export default (migrationManager: MigrationManager) => {
   migrateModelSyncs(migrationManager);
   
   migrateEmits(migrationManager)
+  migrateProvide(migrationManager)
+  migrateInject(migrationManager)
   
   migrateData(migrationManager.clazz, migrationManager.outFile);
   

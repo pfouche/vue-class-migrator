@@ -31,6 +31,8 @@ import {
 } from "./types";
 import {extractClassPropertyData, extractPropertiesWithDecorator, unsupported} from "../utils";
 import {supportedDecorators as vueClassPropertyDecorators} from "./vue-property-decorator";
+import {AllProvideOptions} from "./vue-property-decorator/provide";
+import {AllInjectOptions} from "./vue-property-decorator/inject";
 
 
 export const supportedDecorators = [
@@ -221,6 +223,43 @@ export default class MigrationManager {
       //   returnType: options.returnType,
       //   statements: options.statements,
       // })
+    }
+  }
+
+  addProvides(options: AllProvideOptions) {
+    const entries = Object.entries(options);
+    if (entries.length > 0) {
+      addVueImport(this.outFile, 'provide');
+      this.outFile.addStatements(['\n']);
+
+      entries.forEach(([propName, options]) => {
+        this.outFile.addStatements(writer => {
+          if (options.key)
+            writer
+              .write(`\nexport const ${options.key} = Symbol() as InjectionKey<${options.tsType?.getText()}>;`)
+              .write(`\nprovide(${options.key}, ${options.initializer});`);
+          else
+            this.unsupported('key must be declared in @Provide.');
+        });
+      });
+    }
+  }
+
+  addInjects(options: AllInjectOptions) {
+    const entries = Object.entries(options);
+    if (entries.length > 0) {
+      addVueImport(this.outFile, 'inject');
+      this.outFile.addStatements(['\n']);
+
+      Object.entries(options).forEach(([propName, options]) => {
+        this.outFile.addStatements(writer => {
+          if (options.key)
+            writer
+              .write(`\nconst ${options.propName} = inject(${options.key});`);
+          else
+            this.unsupported('key must be declared in @Inject.');
+        });
+      });
     }
   }
 
