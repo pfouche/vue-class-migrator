@@ -1,8 +1,7 @@
-import { ClassDeclaration, SyntaxKind } from 'ts-morph';
-import {unsupported} from "../../utils";
+import {SyntaxKind} from 'ts-morph';
 import type MigrationManager from "../migratorManager";
 
-const supportedComponentProperties = ['components']
+const supportedComponentProperties = ['components', 'setup'];
 
 export default (migrationManager: MigrationManager): void => {
   const clazz = migrationManager.clazz
@@ -14,10 +13,10 @@ export default (migrationManager: MigrationManager): void => {
     .getArguments()
     .pop()
     ?.asKindOrThrow(SyntaxKind.ObjectLiteralExpression, '@Component props argument should be and object {}');
-
-  const dataProp = componentProperties?.getProperties().forEach(p => {
+  
+  componentProperties?.getProperties().forEach(p => {
     const identifier = p.getFirstChild()?.getText();
     if (!supportedComponentProperties.find(scp => scp === identifier))
       migrationManager.unsupported(`Unsupported @Component option: ${identifier}`)
-  })
+  });
 };

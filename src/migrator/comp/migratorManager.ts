@@ -25,7 +25,8 @@ import {
   AddProps,
   AddSpecialFunction,
   AddVuexEntities,
-  AddWatch, RoutingUsage,
+  AddWatch,
+  RoutingUsage,
   VuexComposable,
   vuexDecorators
 } from "./types";
@@ -90,6 +91,16 @@ export default class MigrationManager {
     //   })
   }
 
+  // addSetup(statements: string) {
+  //   this.outFile.addStatements(statements)
+  // }
+
+  // addSetup(statements: Statement[]) {
+  addSetup(statements: string) {
+    this.outFile.addStatements(statements);
+  }
+
+  
   addProp(options: {
     propName: string;
     propNode: Node | undefined;
@@ -230,12 +241,15 @@ export default class MigrationManager {
     const entries = Object.entries(options);
     if (entries.length > 0) {
       addVueImport(this.outFile, 'provide');
+      addVueImport(this.outFile, 'InjectionKey');
       this.outFile.addStatements(['\n']);
 
       entries.forEach(([propName, options]) => {
         this.outFile.addStatements(writer => {
           if (options.key)
             writer
+              // 'export' will generate a compilation error on purpose, 
+              // as the key declaration must be moved to a separate file. 
               .write(`\nexport const ${options.key} = Symbol() as InjectionKey<${options.tsType?.getText()}>;`)
               .write(`\nprovide(${options.key}, ${options.initializer});`);
           else

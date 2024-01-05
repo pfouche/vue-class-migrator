@@ -1,6 +1,7 @@
 import type MigrationManager from './migratorManager';
 import migrateImports from "./vue-class-component/migrate-imports";
 import migrateExtends from "./vue-class-component/migrate-extends";
+import migrateSetup from "./vue-class-component/migrate-setup";
 import migrateData from "./vue-class-component/migrate-data";
 import migrateGetters from "./vue-class-component/migrate-getters";
 import migrateMethods from "./vue-class-component/migrate-methods";
@@ -23,6 +24,7 @@ export default (migrationManager: MigrationManager) => {
   
   migrateImports(migrationManager.outFile);
   migrateExtends(migrationManager);
+  migrateSetup(migrationManager);
 
   migrateProps(migrationManager);
   migratePropSyncs(migrationManager);

@@ -16,7 +16,7 @@ describe('Provide Migration', () => {
                     p2: SomeType = {a: 'a0', b: 'b0'}
                 }`,
       // Results
-      `import { provide } from "vue";
+      `import { provide, InjectionKey } from "vue";
                 export const key0 = Symbol() as InjectionKey<string>;
                 provide(key0, 'foo');
                 
@@ -35,7 +35,7 @@ describe('Provide Migration', () => {
                     p1: string = 'foo'
                 }`,
       // Results
-      `import { provide } from "vue";
+      `import { provide, InjectionKey } from "vue";
                 console.error('MIGRATION ERROR: key must be declared in @Provide.')
                 
                 `,
