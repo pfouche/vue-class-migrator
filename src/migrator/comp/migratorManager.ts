@@ -10,7 +10,7 @@ import {
   TypeNode,
   VariableDeclarationKind,
 } from 'ts-morph';
-import {ComputedProps, MigratePartProps} from '../types/migrator';
+import {ComputedProps, CompositionMigratePartProps} from '../types/migrator';
 import getDefineComponentInit from './migrate-component-decorator';
 import {addVueImport, addVueRouterImport, addVuexImport} from "../../__tests__/utils";
 import {
@@ -30,7 +30,7 @@ import {
   VuexComposable,
   vuexDecorators
 } from "./types";
-import {extractClassPropertyData, extractPropertiesWithDecorator, unsupported} from "../utils";
+import {extractClassPropertyData, extractPropertiesWithDecorator, info, unsupported} from "../utils";
 import {supportedDecorators as vueClassPropertyDecorators} from "./vue-property-decorator";
 import {AllProvideOptions} from "./vue-property-decorator/provide";
 import {AllInjectOptions} from "./vue-property-decorator/inject";
@@ -44,19 +44,26 @@ export const supportedDecorators = [
 export default class MigrationManager {
   private _clazz: ClassDeclaration;
 
-  private _mainObject: ObjectLiteralExpression;
+  // private _mainObject: ObjectLiteralExpression;
 
   private _outFile: SourceFile;
 
-  constructor(props: MigratePartProps) {
-    this._mainObject = props.mainObject;
+  constructor(props: CompositionMigratePartProps) {
+    // this._mainObject = props.mainObject;
     this._clazz = props.clazz;
     this._outFile = props.outFile;
+
+    // const mainObjectVariable = this.outFile
+    //   .getVariableDeclarations()
+    //   .filter((decl) => decl.getName() === 'mainObject')
+    //   .pop()
+    //
+    // mainObjectVariable?.remove()
   }
 
-  get mainObject(): ObjectLiteralExpression {
-    return this._mainObject;
-  }
+  // get mainObject(): ObjectLiteralExpression {
+  //   return this._mainObject;
+  // }
 
   get clazz(): ClassDeclaration {
     return this._clazz;
@@ -69,6 +76,17 @@ export default class MigrationManager {
   unsupported(msg: string) {
     unsupported(this.outFile, msg);
   }
+
+  // addComments(comments: string) {
+  //   this.outFile.addStatements(writer => {
+  //     // writer.write(`const $$temp$$ = 'temp'`)
+  //     writer.writeLine(comments);
+  //   });
+  //   if (comments) info(this.outFile, 'Comments');
+  //   // const temp = this.outFile
+  //   //   .getVariableStatementOrThrow('$$temp$$');
+  //   // temp.remove();
+  // }
 
   addModel(options: {
     propName: string,
@@ -193,11 +211,13 @@ export default class MigrationManager {
 
   addEmits(events: string[]) {
     addVueImport(this.outFile, 'defineEmits');
-
     const eventsArg = events.map(e => `'${e}'`).join(', ')
+    this.outFile.addStatements(writer => {
+      writer
+        .newLineIfLastNot()
+        .write(`const emit = defineEmits([${eventsArg}]);`);
 
-    this.outFile.addStatements(writer => writer.newLineIfLastNot());
-    this.outFile.addStatements([`const emit = defineEmits([${eventsArg}]);`]);
+    });
   }
 
   addComputedProp(options: ComputedProps) {
@@ -324,6 +344,7 @@ export default class MigrationManager {
     addVueImport(this.outFile, name);
     this.outFile.addStatements(writer =>
       writer
+        .newLineIfLastNot()
         .write(`${name}(() =>`)
         .block(() => {
           const transformedBody = this.transformMethodBody(body);
@@ -488,25 +509,25 @@ export const createCompositionMigrationManager = (
     });
 
   const defineComponentInitObject = getDefineComponentInit(sourceFileClass, outFile);
-  let clazzReplacement: string;
-  if (!outClazz.getDefaultKeyword()) {
+  // let clazzReplacement: string;
+  if (!sourceFileClass.getDefaultKeyword()) {
     // Non default exported class
     throw new Error('Non-default exported class not supported');
-    // clazzReplacement = [
-    //   outClazz?.getExportKeyword()?.getText(),
-    //   `const ${outClazz.getName()} =`,
-    //   `defineComponent(${defineComponentInitObject})`,
-    // ]
-    //   .filter((s) => s)
-    //   .join(' ');
-  } else {
-    clazzReplacement = [
-      outClazz?.getExportKeyword()?.getText(),
-      outClazz?.getDefaultKeywordOrThrow()?.getText(),
-      `defineComponent(${defineComponentInitObject})`,
-    ]
-      .filter((s) => s)
-      .join(' ');
+    //   // clazzReplacement = [
+    //   //   outClazz?.getExportKeyword()?.getText(),
+    //   //   `const ${outClazz.getName()} =`,
+    //   //   `defineComponent(${defineComponentInitObject})`,
+    //   // ]
+    //   //   .filter((s) => s)
+    //   //   .join(' ');
+    // } else {
+    //   clazzReplacement = [
+    //     outClazz?.getExportKeyword()?.getText(),
+    //     outClazz?.getDefaultKeywordOrThrow()?.getText(),
+    //     `defineComponent(${defineComponentInitObject})`,
+    //   ]
+    //     .filter((s) => s)
+    //     .join(' ');
   }
 
   // Main structure
@@ -514,17 +535,18 @@ export const createCompositionMigrationManager = (
   //   // .replaceWithText(clazzReplacement)
   //   .getFirstDescendantByKind(SyntaxKind.ObjectLiteralExpression)
 
-  const mainObject = outClazz
-    .replaceWithText('const mainObject = {}')
-    .getFirstDescendantByKind(SyntaxKind.ObjectLiteralExpression);
+  const jsdocs = outClazz.getJsDocs().map(d => d.getText()).join('\n');
+  // const mainObject = outClazz
+  outClazz.replaceWithText(jsdocs);
 
-  if (!mainObject) {
-    throw new Error('Unable to create mainObject');
-  }
+  //
+  // if (!mainObject) {
+  //   throw new Error('Unable to create mainObject');
+  // }
 
-  const migratePartProps: MigratePartProps = {
+  const migratePartProps: CompositionMigratePartProps = {
     clazz: sourceFileClass,
-    mainObject,
+    // mainObject,
     outFile,
     sourceFile,
   };

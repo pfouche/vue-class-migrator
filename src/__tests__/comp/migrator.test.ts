@@ -56,6 +56,10 @@ describe('migrateFile()', () => {
     test('Non vue import respected', async () => {
       const sourceFile = createSourceFile([
         'import Bla, { Blo } from "./blabla"',
+        '',
+        '/**',
+        ' * JSDoc comment',
+        ' */',
         '@Component',
         'export default class Test {}',
       ].join('\n'))
@@ -64,6 +68,10 @@ describe('migrateFile()', () => {
       expect(migratedFile.getText())
         .toBe([
           'import Bla, { Blo } from "./blabla"',
+          '',
+          '/**',
+          ' * JSDoc comment',
+          ' */',
         ].join('\n'))
     })
 
@@ -77,7 +85,7 @@ describe('migrateFile()', () => {
       const migratedFile = await migrateFile(project, sourceFile, true)
       expect(migratedFile.getText())
         .toBe([
-          'import Vue, { mounted } from "vue";',
+          'import Vue, { mounted } from "vue";\n',
         ].join('\n'))
     })
   })

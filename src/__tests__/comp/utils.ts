@@ -12,8 +12,8 @@ export const expectMigration = async (sourceCode: string, targetCode: string) : 
   const sourceFile = createSourceFile(sourceCode.replaceAll('  ', ''));
 
   const migratedFile = await migrateFile(project, sourceFile, true);
-  expect(migratedFile.getText().replaceAll('  ', ''))
-    .toBe(targetCode.replaceAll('  ', ''));
+  expect(migratedFile.getText().replaceAll('  ', '').trimEnd())
+    .toBe(targetCode.replaceAll('  ', '').trimEnd());
 };
 
 export const expectMigrationToThrow = async (

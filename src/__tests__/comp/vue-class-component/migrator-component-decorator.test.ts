@@ -7,9 +7,13 @@ describe('@Component decorator', () => {
 
   test('Empty @Component({}) props resolves', async () => {
     await expectMigration(
-      `@Component({})
-            export default class Test {}
-            `,
+      `/**
+                   * JS Class comment 1
+                   * JS Class comment 2
+                   */
+                 @Component({})
+                 export default class Test {}
+                 `,
       ``,
     );
   });

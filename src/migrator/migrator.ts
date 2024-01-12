@@ -47,7 +47,7 @@ const migrateTsFileToCompositionApi = async (project: Project, sourceFile: Sourc
       .filter((decl) => decl.getName() === 'mainObject')
       .pop()
 
-    mainObjectVariable?.remove()
+    // mainObjectVariable?.remove()
 
   } catch (error) {
     await outFile.deleteImmediately();

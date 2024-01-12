@@ -25,6 +25,7 @@ describe('Vuex entities', () => {
                 }`,
       // Results
       `import { useState } from "vuex-composition-helpers";
+      
                 const {s1, ss2: s2} = useState(['s1', 'ss2']);
                 const {ss3: s3, s4} = useState('namespace0', ['ss3', 's4']);
                 const {s5} = useState('namespace1', ['s5']);
@@ -53,6 +54,7 @@ describe('Vuex entities', () => {
                 }`,
       // Results
       `import { useGetters } from "vuex-composition-helpers";
+      
                 const {g1, gg2: g2} = useGetters(['g1', 'gg2']);
                 const {gg3: g3, g4} = useGetters('namespace0', ['gg3', 'g4']);
                 const {g5} = useGetters('namespace1', ['g5']);
@@ -81,6 +83,7 @@ describe('Vuex entities', () => {
                 }`,
       // Results
       `import { useMutations } from "vuex-composition-helpers";
+      
                 const {m1, mm2: m2} = useMutations(['m1', 'mm2']);
                 const {mm3: m3, m4} = useMutations('namespace0', ['mm3', 'm4']);
                 const {m5} = useMutations('namespace1', ['m5']);
@@ -108,6 +111,7 @@ describe('Vuex entities', () => {
                 }`,
       // Results
       `import { useActions } from "vuex-composition-helpers";
+      
                 const {a1, aa2: a2} = useActions(['a1', 'aa2']);
                 const {aa3: a3, a4} = useActions('namespace0', ['aa3', 'a4']);
                 const {a5} = useActions('namespace1', ['a5']);

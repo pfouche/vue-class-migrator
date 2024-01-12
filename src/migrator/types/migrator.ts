@@ -6,6 +6,12 @@ import {
   SourceFile,
 } from 'ts-morph';
 
+export interface CompositionMigratePartProps {
+  clazz: ClassDeclaration;
+  outFile: SourceFile;
+  sourceFile: SourceFile;
+}
+
 export interface MigratePartProps {
   clazz: ClassDeclaration;
   mainObject: ObjectLiteralExpression;

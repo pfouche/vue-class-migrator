@@ -17,6 +17,7 @@ describe('Provide Migration', () => {
                 }`,
       // Results
       `import { provide, InjectionKey } from "vue";
+
                 export const key0 = Symbol() as InjectionKey<string>;
                 provide(key0, 'foo');
                 

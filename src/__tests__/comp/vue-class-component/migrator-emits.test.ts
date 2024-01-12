@@ -36,6 +36,7 @@ describe('Emit Migration', () => {
                 }`,
       // Results
       `import { defineEmits } from "vue";
+      
                 const emit = defineEmits(['evt0', 'evt1']);
                 
                 function m1() {

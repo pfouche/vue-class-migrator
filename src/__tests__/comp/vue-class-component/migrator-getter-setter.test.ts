@@ -18,6 +18,7 @@ describe('Data Property Migration', () => {
                 }`,
         // Results
         `import { ref, computed } from "vue";
+        
                   const foo = ref('abc');
                   
                   const params = computed(() => {
@@ -60,6 +61,7 @@ describe('Data Property Migration', () => {
                 }`,
         // Results
         `import { ref, computed } from "vue";
+        
                   const foo = ref('abc');
                   
                   const params = computed( {

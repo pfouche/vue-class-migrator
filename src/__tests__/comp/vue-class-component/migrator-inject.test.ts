@@ -17,6 +17,7 @@ describe('Inject Migration', () => {
                 }`,
       // Results
       `import { inject } from "vue";
+      
                 const p1 = inject(key0);
                 
                 const p2 = inject(key1);
@@ -35,7 +36,6 @@ describe('Inject Migration', () => {
       // Results
       `import { inject } from "vue";
                 console.error('MIGRATION ERROR: key must be declared in @Inject.')
-              
                 `,
     );
   });

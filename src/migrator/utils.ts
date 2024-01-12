@@ -74,3 +74,9 @@ export const unsupported = (outFile: SourceFile, msg: string) => {
   outFile.addStatements([`console.error('${m}')`]);
   logger.warn(m)
 }; 
+
+export const info = (outFile: SourceFile, msg: string) => {
+  const m = `MIGRATION INFO: ${msg}`;
+  outFile.addStatements([`console.log('${m}')`]);
+  logger.info(m)
+}; 

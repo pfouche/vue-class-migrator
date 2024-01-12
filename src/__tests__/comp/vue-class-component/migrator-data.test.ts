@@ -62,6 +62,7 @@ describe('Data Property Migration', () => {
                 }`,
         // Results
         `import { Ref, ref } from "vue";
+
                   const myProp: Ref<number> = ref();
                   const myProp2 = ref();
                   const myProp3 = ref(false);
@@ -92,6 +93,7 @@ describe('Data Property Migration', () => {
                 }`,
         // Results
         `import { Ref, ref } from "vue";
+
                   const data: Ref<SectionData> = ref({
                             form: {
                                     ref: "tourTranslationVolumeForm",

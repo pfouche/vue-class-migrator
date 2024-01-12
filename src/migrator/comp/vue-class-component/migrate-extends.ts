@@ -1,10 +1,8 @@
-import {ClassDeclaration} from 'ts-morph';
 import type MigrationManager from "../migratorManager";
 
 export default (migrationManager: MigrationManager) => {
-  const classExtend = migrationManager.clazz.getExtends()?.getText();
-
-  // Class extend
+  const clazz = migrationManager.clazz;
+  const classExtend = clazz.getExtends()?.getText();
   if (classExtend && classExtend !== 'Vue') {
     migrationManager.unsupported(
       'This component is extending from a class different form Vue. This is not supported.',

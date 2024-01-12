@@ -34,6 +34,7 @@ describe('Methods Property Migration', () => {
                 }`,
         // Results
         `import { onMounted } from "vue";
+        
                   onMounted(() => {
                         console.log("OK");
                     }
@@ -54,6 +55,7 @@ describe('Methods Property Migration', () => {
                 }`,
         // Results
         `import { onMounted } from "vue";
+        
                 onMounted(() => {
                         console.log("OK");
                     }
@@ -92,6 +94,7 @@ describe('Methods Property Migration', () => {
         // Results
         `import { defineProps, ref, computed } from "vue";
                   import { useState } from "vuex-composition-helpers";
+                  
                   type Props = {
                     foo: string
                   };
@@ -133,6 +136,7 @@ describe('Methods Property Migration', () => {
       // Results
       `import { computed } from "vue";
                 import { useRoute, useRouter } from "vue-router/composables";
+                
                 const currentRoute = computed(() => {
                   return useRoute()
                 }
@@ -174,6 +178,7 @@ describe('Methods Property Migration', () => {
                 }`,
         // Results
         `import { defineEmits, computed } from "vue";
+        
                   const emit = defineEmits(['change']);
                   
                   const params = computed( {

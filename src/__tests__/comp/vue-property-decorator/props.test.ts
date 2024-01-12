@@ -15,6 +15,7 @@ describe('@Prop decorator', () => {
                 }`,
       // Result
       `import { defineProps } from "vue";
+
                 type Props = {
                   checkId: MyCheckId
                 };
@@ -41,6 +42,7 @@ describe('@Prop decorator', () => {
                 }`,
       // Result
       `import { defineProps } from "vue";
+
                 console.error('MIGRATION ERROR: Unsupported @Component option: props')
                 
                 type Props = {
@@ -62,6 +64,7 @@ describe('@Prop decorator', () => {
                 }`,
       // Result
       `import { defineProps } from "vue";
+
                 type Props = {
                   checkId: MyCheckId[]
                 };
@@ -80,6 +83,7 @@ describe('@Prop decorator', () => {
                 }`,
       // Result
       `import { withDefaults, defineProps } from "vue";
+
                 type Props = {
                   checkId: MyCheckId
                 };
@@ -105,6 +109,7 @@ describe('@Prop decorator', () => {
                 }`,
       // Results
       `import { withDefaults, defineProps } from "vue";
+
                 type Props = {
                   propA: number
                   propB?: number
@@ -129,6 +134,7 @@ describe('@Prop decorator', () => {
                 }`,
       // Results
       `import { defineProps } from "vue";
+
                 type Props = {
                   checkId?: MyCheckId
                 };
@@ -147,6 +153,7 @@ describe('@Prop decorator', () => {
                 }`,
       // Result
       `import { defineProps } from "vue";
+
                 type Props = {
                   checkId?: string
                 };
@@ -165,6 +172,7 @@ describe('@Prop decorator', () => {
                 }`,
       // Result
       `import { defineProps } from "vue";
+
                 type Props = {
                   checkId?: undefined
                 };

@@ -3,6 +3,7 @@ import type MigrationManager from "../migratorManager";
 
 const supportedComponentProperties = ['components', 'setup'];
 
+
 export default (migrationManager: MigrationManager): void => {
   const clazz = migrationManager.clazz
   const decorator = clazz.getDecorator('Component');

@@ -17,6 +17,7 @@ describe('@Watch decorator', () => {
                 }`,
       // Result
       `import { ref, watch } from "vue";
+      
                 const att = ref(null);
                 const foo = ref('bar');
                 
@@ -41,6 +42,7 @@ describe('@Watch decorator', () => {
                 }`,
       // Result
       `import { ref, watch } from "vue";
+      
                 const att = ref('abc');
                 
                 watch(
@@ -65,6 +67,7 @@ describe('@Watch decorator', () => {
                 }`,
       // Result
       `import { ref, watch } from "vue";
+      
                 const att = ref({foo: bar});
                 
                 watch(
@@ -91,6 +94,7 @@ describe('@Watch decorator', () => {
                 }`,
       // Result
       `import { defineProps, watch } from "vue";
+
                 type Props = {
                   prop1: string
                 };
