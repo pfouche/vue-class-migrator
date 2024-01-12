@@ -14,7 +14,10 @@ describe('@Component decorator', () => {
                  @Component({})
                  export default class Test {}
                  `,
-      ``,
+      `console.log(\`MIGRATION: Comments
+                // JS Class comment 1
+                // JS Class comment 2
+                \`)`,
     );
   });
 

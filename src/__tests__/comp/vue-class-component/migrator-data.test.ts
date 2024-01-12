@@ -56,16 +56,28 @@ describe('Data Property Migration', () => {
       await expectMigration(
         `@Component
                 export default class Test extends Vue {
-                    myProp: number;
-                    myProp2;
-                    myProp3 = false;
+                    /**
+                     * jsdoc 1
+                     * jsdoc 2
+                     */
+                    myProp: number; // trailing comment 1
+                    // comment 1
+                    // comment 2
+                    myProp2;  // trailing comment 2
+                    myProp3 = false; // trailing comment 3
                 }`,
         // Results
         `import { Ref, ref } from "vue";
-
+                  
+                  /**
+                   * jsdoc 1
+                   * jsdoc 2
+                   */
                   const myProp: Ref<number> = ref();
+                    // comment 1
+                    // comment 2
                   const myProp2 = ref();
-                  const myProp3 = ref(false);
+                  const myProp3 = ref(false); // trailing comment 3
                 `,
       );
     });

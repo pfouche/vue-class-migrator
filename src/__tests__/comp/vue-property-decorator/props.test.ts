@@ -9,15 +9,23 @@ describe('@Prop decorator', () => {
     await expectMigration(
       `@Component
                 export default class Test extends Vue {
+                    /**
+                     * jsdoc 1
+                     * jsdoc 2
+                     */
                     @Prop
-                    checkId: MyCheckId;
+                    checkId: MyCheckId; // Trailing comment
                     
                 }`,
       // Result
       `import { defineProps } from "vue";
 
                 type Props = {
-                  checkId: MyCheckId
+                  /**
+                   * jsdoc 1
+                   * jsdoc 2
+                   */
+                  checkId: MyCheckId // Trailing comment
                 };
 
                 const props = defineProps<Props>();
@@ -58,15 +66,19 @@ describe('@Prop decorator', () => {
     await expectMigration(
       `@Component
                 export default class Test extends Vue {
+                    // comment 1
+                    // comment 2
                     @Prop
-                    checkId: MyCheckId[];
+                    checkId: MyCheckId[]; // trailing comment
                     
                 }`,
       // Result
       `import { defineProps } from "vue";
 
                 type Props = {
-                  checkId: MyCheckId[]
+                  // comment 1
+                  // comment 2
+                  checkId: MyCheckId[] // trailing comment
                 };
                 
                 const props = defineProps<Props>();
@@ -77,15 +89,19 @@ describe('@Prop decorator', () => {
   test('@Prop with default become props', async () => {
     await expectMigration(
       `@Component
-                export default class Test extends Vue {
+                export default class Test extends Vue {             
+                    // comment 1
+                    // comment 2
                     @Prop({ default: 3 })
-                    checkId: MyCheckId;
+                    checkId: MyCheckId; // trailing comment
                 }`,
       // Result
       `import { withDefaults, defineProps } from "vue";
 
-                type Props = {
-                  checkId: MyCheckId
+                type Props = {            
+                  // comment 1
+                  // comment 2
+                  checkId: MyCheckId // trailing comment
                 };
                 
                 const props = withDefaults(defineProps<Props>(), {

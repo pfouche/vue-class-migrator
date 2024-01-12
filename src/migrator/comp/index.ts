@@ -1,5 +1,6 @@
 import type MigrationManager from './migratorManager';
 import migrateImports from "./vue-class-component/migrate-imports";
+import migrateClassJsdocs from "./vue-class-component/migrate-class-jsdocs";
 import migrateExtends from "./vue-class-component/migrate-extends";
 import migrateSetup from "./vue-class-component/migrate-setup";
 import migrateData from "./vue-class-component/migrate-data";
@@ -35,7 +36,7 @@ export default (migrationManager: MigrationManager) => {
   migrateProvide(migrationManager)
   migrateInject(migrationManager)
   
-  migrateData(migrationManager.clazz, migrationManager.outFile);
+  migrateData(migrationManager);
   
   migrateVuexStates(migrationManager);
 
@@ -51,4 +52,6 @@ export default (migrationManager: MigrationManager) => {
   migrateVuexActions(migrationManager);
 
   migrateMethods(migrationManager);
+  
+  migrateClassJsdocs(migrationManager);
 };

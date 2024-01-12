@@ -58,7 +58,8 @@ describe('migrateFile()', () => {
         'import Bla, { Blo } from "./blabla"',
         '',
         '/**',
-        ' * JSDoc comment',
+        ' * comment 1',
+        ' * comment 2',
         ' */',
         '@Component',
         'export default class Test {}',
@@ -67,11 +68,13 @@ describe('migrateFile()', () => {
       const migratedFile = await migrateFile(project, sourceFile, true)
       expect(migratedFile.getText())
         .toBe([
+          'console.log(`MIGRATION: Comments',
+          '// comment 1',
+          '// comment 2',
+          '`)',
           'import Bla, { Blo } from "./blabla"',
           '',
-          '/**',
-          ' * JSDoc comment',
-          ' */',
+          '',
         ].join('\n'))
     })
 

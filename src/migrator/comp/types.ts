@@ -6,7 +6,7 @@ export type AddProps = {
   propsOptions: PropsOptions
 }
 
-export type AddWatch = {
+export type AddWatch = CommentOptions & {
   path: string;
   options: string | undefined;
   handlerMethod: string;
@@ -15,13 +15,13 @@ export type AddWatch = {
   isAsync: boolean;
 };
 
-export type AddSpecialFunction =
+export type AddSpecialFunction = CommentOptions &
   {
     name: string
     body: string | undefined
   };
 
-export type AddFunction =
+export type AddFunction = CommentOptions &
   {
     name: string
     parameters: OptionalKind<ParameterDeclarationStructure>[] | undefined;
@@ -58,3 +58,30 @@ export type RoutingUsage = {
   useRoute: boolean
   useRouter: boolean
 }
+
+
+export type CommentOptions = {
+  leadingComments: string | undefined;
+  trailingComments: string | undefined;
+}
+
+export type ComputedGetSetOptions = {
+  name: string;
+  cache?: boolean;
+  get: {
+    statements?: string;
+    returnType?: string;
+  },
+  set: {
+    parameters: OptionalKind<ParameterDeclarationStructure>[] | undefined,
+    statements?: string;
+  }
+};
+
+export type ComputedBasicOptions = CommentOptions & {
+  name: string;
+  statements?: string;
+  returnType?: string;
+};
+
+export type ComputedProps = ComputedGetSetOptions | ComputedBasicOptions;

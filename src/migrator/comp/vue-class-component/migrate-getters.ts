@@ -1,4 +1,5 @@
 import type MigrationManager from '../migratorManager';
+import {commentOptions} from "../../utils";
 
 export default (migrationManager: MigrationManager) => {
   const { clazz } = migrationManager;
@@ -24,6 +25,7 @@ export default (migrationManager: MigrationManager) => {
         name: getterName,
         returnType: getter.getReturnTypeNode()?.getText(),
         statements: getter.getBodyText(),
+        ...commentOptions(getter)
       });
     }
   });

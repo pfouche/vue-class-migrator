@@ -1,8 +1,9 @@
 import {ClassDeclaration, Node, SyntaxKind} from 'ts-morph';
-import {extractPropertiesWithDecorator} from '../../utils';
+import {commentOptions, extractPropertiesWithDecorator} from '../../utils';
 import type MigrationManager from '../migratorManager';
+import {CommentOptions} from "../types";
 
-export type InjectOptions = {
+export type InjectOptions = CommentOptions & {
   propName: string
   key: string | undefined
 }
@@ -32,6 +33,7 @@ const buildOptions = (clazz: ClassDeclaration, allOptions: AllInjectOptions, dec
     allOptions[propName] = {
       propName,
       key,
+      ...commentOptions(prop)
     };
   });
 };

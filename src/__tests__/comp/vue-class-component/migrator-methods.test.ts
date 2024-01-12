@@ -28,6 +28,10 @@ describe('Methods Property Migration', () => {
       await expectMigration(
         `@Component
                 export default class Test extends Vue {
+                    /**
+                     * jsdoc1
+                     * jsdoc2
+                     */
                     mounted() {
                         console.log("OK");
                     }
@@ -35,7 +39,11 @@ describe('Methods Property Migration', () => {
         // Results
         `import { onMounted } from "vue";
         
-                  onMounted(() => {
+                    /**
+                     * jsdoc1
+                     * jsdoc2
+                     */
+                    onMounted(() => {
                         console.log("OK");
                     }
                     )`,
@@ -49,7 +57,9 @@ describe('Methods Property Migration', () => {
                     mounted() {
                         console.log("OK");
                     }
+                    // comment 1
                     myMethod(param1: string, p2, p3: any): void {
+                        // comment 2
                         console.log("hey")
                     }
                 }`,
@@ -59,9 +69,11 @@ describe('Methods Property Migration', () => {
                 onMounted(() => {
                         console.log("OK");
                     }
-                    )
+                )
                     
+                // comment 1
                 function myMethod(param1: string, p2, p3: any): void {
+                  // comment 2
                   console.log("hey")
                   }
                   `,
@@ -102,7 +114,7 @@ describe('Methods Property Migration', () => {
                   const props = defineProps<Props>();
                   const bar = ref('abc');
                   const {baz} = useState(['baz']);
-
+                  
                   const bat = computed(() => {
                     return 'def'
                   }

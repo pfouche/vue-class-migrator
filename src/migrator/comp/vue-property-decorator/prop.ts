@@ -1,8 +1,9 @@
 import {Node, SyntaxKind, TypeNode} from 'ts-morph';
-import {extractPropertiesWithDecorator} from '../../utils';
+import {commentOptions, extractPropertiesWithDecorator} from '../../utils';
 import type MigrationManager from '../migratorManager';
+import {CommentOptions} from "../types";
 
-export type PropOptions = {
+export type PropOptions = CommentOptions & {
   propName: string;
   required: boolean;
   defaultValue: string |undefined;
@@ -42,6 +43,7 @@ export default (migrationManager: MigrationManager) => {
       required,
       propNode: propOptions,
       tsType: propTsType,
+      ...commentOptions(prop)
     };
   });
 

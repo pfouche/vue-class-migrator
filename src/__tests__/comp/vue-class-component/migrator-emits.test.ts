@@ -26,9 +26,15 @@ describe('Emit Migration', () => {
     await expectMigration(
       `@Component
                 export default class Test extends Vue {
+                    /**
+                     * jsdoc1
+                     * jsdoc2
+                     */
                     m1() {
                       this.$emit('evt0')
                     }
+                    // comment 1
+                    // comment 2
                     m2() {
                       this.$emit('evt1', 2),
                       this.$emit('evt0')
@@ -39,10 +45,16 @@ describe('Emit Migration', () => {
       
                 const emit = defineEmits(['evt0', 'evt1']);
                 
+                /**
+                 * jsdoc1
+                 * jsdoc2
+                 */
                 function m1() {
                   emit('evt0')
                 }
                 
+                // comment 1
+                // comment 2
                 function m2() {
                   emit('evt1', 2),
                   emit('evt0')

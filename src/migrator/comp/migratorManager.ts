@@ -4,13 +4,13 @@ import {
   Node,
   ObjectLiteralExpression,
   OptionalKind,
-  ParameterDeclarationStructure,
+  ParameterDeclarationStructure, PropertyDeclaration,
   SourceFile,
   SyntaxKind,
   TypeNode,
   VariableDeclarationKind,
 } from 'ts-morph';
-import {ComputedProps, CompositionMigratePartProps} from '../types/migrator';
+import {CompositionMigratePartProps} from '../types/migrator';
 import getDefineComponentInit from './migrate-component-decorator';
 import {addVueImport, addVueRouterImport, addVuexImport} from "../../__tests__/utils";
 import {
@@ -25,12 +25,12 @@ import {
   AddProps,
   AddSpecialFunction,
   AddVuexEntities,
-  AddWatch,
+  AddWatch, CommentOptions, ComputedProps,
   RoutingUsage,
   VuexComposable,
   vuexDecorators
 } from "./types";
-import {extractClassPropertyData, extractPropertiesWithDecorator, info, unsupported} from "../utils";
+import {commentOptions, extractClassPropertyData, extractPropertiesWithDecorator, info, unsupported} from "../utils";
 import {supportedDecorators as vueClassPropertyDecorators} from "./vue-property-decorator";
 import {AllProvideOptions} from "./vue-property-decorator/provide";
 import {AllInjectOptions} from "./vue-property-decorator/inject";
@@ -77,7 +77,14 @@ export default class MigrationManager {
     unsupported(this.outFile, msg);
   }
 
-  // addComments(comments: string) {
+  addComments(comments: string[]) {
+    this.outFile.insertText(0,writer => {
+      writer.write('console.log(`MIGRATION: Comments').newLine()
+      comments.forEach(c => {
+        writer.write(`// ${c}`).newLine()
+      })
+      writer.write('`)').newLine()
+    })
   //   this.outFile.addStatements(writer => {
   //     // writer.write(`const $$temp$$ = 'temp'`)
   //     writer.writeLine(comments);
@@ -86,7 +93,7 @@ export default class MigrationManager {
   //   // const temp = this.outFile
   //   //   .getVariableStatementOrThrow('$$temp$$');
   //   // temp.remove();
-  // }
+  }
 
   addModel(options: {
     propName: string,
@@ -167,6 +174,16 @@ export default class MigrationManager {
     // throw new Error(`Error adding prop ${propName}, Kind: ${propNode.getKindName()}.`)
   }
 
+  wrapWithComments(statement: string, options: CommentOptions): string {
+    let result = statement;
+    if (options.leadingComments) {
+      result = `${options.leadingComments}${result}`;
+    }
+    if (options.trailingComments) {
+      result = `${result}${options.trailingComments}`;
+    }
+    return result;
+  }
 
   addProps({propsOptions, atLeastOneDefaultValue}: AddProps) {
     const atLeastOneProp = Object.entries(propsOptions).length > 0;
@@ -181,7 +198,8 @@ export default class MigrationManager {
         // XXX We'd better remove 'undefined' from the union type, if any. 
         // Would be more robust is undefined is not the last term.
         const correctedTypeName = !required ? typeName?.replace(' | undefined', '') : typeName;
-        return `${propName}${required ? '' : '?'}: ${correctedTypeName}`;
+        const declaration = `${propName}${required ? '' : '?'}: ${correctedTypeName}`;
+        return this.wrapWithComments(declaration, propOptions);
       })
       .join('\n');
 
@@ -207,7 +225,31 @@ export default class MigrationManager {
       this.outFile.addStatements(['\nconst props = defineProps<Props>();']);
     }
   }
-  
+
+  addData(data: PropertyDeclaration[]) {
+    if (data.length) {
+      const atLeastOneType = !!data.find(p => p.getTypeNode());
+      if (atLeastOneType)
+        addVueImport(this.outFile, 'Ref');
+      addVueImport(this.outFile, 'ref');
+      this.outFile.addStatements(['\n']);
+      data.forEach((propertyData) => {
+        const typeNode = propertyData.getTypeNode()?.getText();
+        const initializer = propertyData.getInitializer()?.getText();
+        const comments = commentOptions(propertyData);
+        this.outFile.addVariableStatement({
+          declarationKind: VariableDeclarationKind.Const,
+          declarations: [{
+            name: propertyData.getName(),
+            type: typeNode ? `Ref<${typeNode}>` : undefined,
+            initializer: initializer ? `ref(${initializer})` : 'ref()',
+          }],
+          leadingTrivia: comments.leadingComments,
+          trailingTrivia: comments.trailingComments,
+        });
+      });
+    }
+  }
 
   addEmits(events: string[]) {
     addVueImport(this.outFile, 'defineEmits');
@@ -243,8 +285,10 @@ export default class MigrationManager {
     } else {
       const body = this.transformMethodBody(options.statements);
       this.outFile.addStatements(writer => {
+        const start = this.wrapWithComments(`const ${options.name} = computed(() => `, options);
         writer
-          .write(`\nconst ${options.name} = computed(() => `)
+          .newLineIfLastNot()
+          .write(start)
           .block(() => writer.write(body))
           .write(');');
       });
@@ -266,12 +310,16 @@ export default class MigrationManager {
 
       entries.forEach(([propName, options]) => {
         this.outFile.addStatements(writer => {
-          if (options.key)
+          if (options.key) {
+            // 'export' will generate a compilation error on purpose, 
+            // as the key declaration must be moved to a separate file. 
+            const key = this.wrapWithComments(`export const ${options.key} = Symbol() as InjectionKey<${options.tsType?.getText()}>;`, options);
             writer
-              // 'export' will generate a compilation error on purpose, 
-              // as the key declaration must be moved to a separate file. 
-              .write(`\nexport const ${options.key} = Symbol() as InjectionKey<${options.tsType?.getText()}>;`)
-              .write(`\nprovide(${options.key}, ${options.initializer});`);
+              .newLineIfLastNot()
+              .write(key)
+              .newLine()
+              .write(`provide(${options.key}, ${options.initializer});`);
+          }
           else
             this.unsupported('key must be declared in @Provide.');
         });
@@ -287,9 +335,10 @@ export default class MigrationManager {
 
       Object.entries(options).forEach(([propName, options]) => {
         this.outFile.addStatements(writer => {
-          if (options.key)
-            writer
-              .write(`\nconst ${options.propName} = inject(${options.key});`);
+          if (options.key) {
+            const prop = this.wrapWithComments(`const ${options.propName} = inject(${options.key});`, options);
+            writer.newLineIfLastNot().write(prop);
+          }
           else
             this.unsupported('key must be declared in @Inject.');
         });
@@ -340,30 +389,36 @@ export default class MigrationManager {
     // })
   }
 
-  addSpecialFunction({name, body}: AddSpecialFunction) {
+  addSpecialFunction(options: AddSpecialFunction) {
+    const {name, body} = options;
     addVueImport(this.outFile, name);
-    this.outFile.addStatements(writer =>
+    this.outFile.addStatements(writer => {
+      const start = this.wrapWithComments(`${name}(() =>`, options);
       writer
         .newLineIfLastNot()
-        .write(`${name}(() =>`)
+        .write(start)
         .block(() => {
           const transformedBody = this.transformMethodBody(body);
           writer.write(transformedBody);
         })
-        .write(')'));
+        .write(')');
+    })
   }
 
-  addFunction({name, parameters, isAsync, returnType, body}: AddFunction) {
+  addFunction({name, parameters, isAsync, returnType, body, trailingComments, leadingComments}: AddFunction) {
     this.outFile.addFunction({
       name,
       parameters,
       isAsync,
       returnType,
       statements: this.transformMethodBody(body),
+      trailingTrivia: trailingComments,
+      leadingTrivia: leadingComments,
     });
   }
 
-  addWatch({parameters, options, path, isAsync, body}: AddWatch) {
+  addWatch(addWatch: AddWatch) {
+    const {parameters, options, path, isAsync, body} = addWatch;
     addVueImport(this.outFile, 'watch');
     const watchGetter = this.createWatchGetter(path);
     const watchCallback = this.withArrowFunction((arrowFunction => {
@@ -375,9 +430,10 @@ export default class MigrationManager {
     if (options)
       watchArgs.push(options);
     this.outFile.addStatements(writer => {
+      const statement = this.wrapWithComments(`watch(\n${watchArgs.join(',\n')},\n);`, addWatch);
       writer
         .newLineIfLastNot()
-        .write(`watch(\n${watchArgs.join(',\n')},\n);`);
+        .write(statement);
     });
   }
 
@@ -537,7 +593,10 @@ export const createCompositionMigrationManager = (
 
   const jsdocs = outClazz.getJsDocs().map(d => d.getText()).join('\n');
   // const mainObject = outClazz
-  outClazz.replaceWithText(jsdocs);
+  outClazz.replaceWithText(writer => {
+    // writer.write(jsdocs).newLine()
+    writer.write('')
+  });
 
   //
   // if (!mainObject) {

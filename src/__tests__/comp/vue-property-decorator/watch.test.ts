@@ -12,6 +12,10 @@ describe('@Watch decorator', () => {
                     att = null
                     foo = 'bar'
                     
+                    /**
+                     * jsdoc1
+                     * jsdoc2
+                     */
                     @Watch('att')
                     onChanged(val: string) { console.log(this.foo + this.att); }
                 }`,
@@ -21,6 +25,10 @@ describe('@Watch decorator', () => {
                 const att = ref(null);
                 const foo = ref('bar');
                 
+                /**
+                 * jsdoc1
+                 * jsdoc2
+                 */
                 watch(
                   att,
                   (val: string) => {
@@ -37,6 +45,8 @@ describe('@Watch decorator', () => {
                 export default class Test extends Vue {
                     att = 'abc'
                     
+                    // Comment 1
+                    // Comment 2
                     @Watch('att', { immediate: true, deep: true })
                     onChanged(val: string) { console.log("onChanged"); }
                 }`,
@@ -45,6 +55,8 @@ describe('@Watch decorator', () => {
       
                 const att = ref('abc');
                 
+                // Comment 1
+                // Comment 2
                 watch(
                   att,
                   (val: string) => {

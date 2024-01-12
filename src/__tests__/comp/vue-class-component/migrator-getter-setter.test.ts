@@ -12,6 +12,10 @@ describe('Data Property Migration', () => {
                 export default class Test extends Vue {
                     foo = 'abc';
                     
+                    /**
+                     * jsdoc1
+                     * jsdoc2
+                     */
                     get params(): string {
                         return "hello" + this.foo;
                       }
@@ -20,7 +24,11 @@ describe('Data Property Migration', () => {
         `import { ref, computed } from "vue";
         
                   const foo = ref('abc');
-                  
+                
+                  /**
+                   * jsdoc1
+                   * jsdoc2
+                   */
                   const params = computed(() => {
                     return "hello" + foo.value;
                   }

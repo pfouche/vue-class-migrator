@@ -5,6 +5,7 @@ import {
   ParameterDeclarationStructure,
   SourceFile,
 } from 'ts-morph';
+import {CommentOptions} from "../comp/types";
 
 export interface CompositionMigratePartProps {
   clazz: ClassDeclaration;

@@ -9,13 +9,19 @@ describe('Vuex entities', () => {
     await expectMigration(
       `@Component
                 export default class Test extends Vue {
+                    /**
+                     * jsdoc1
+                     * jsdoc2
+                     */
                     @State('ss3', { namespace: 'namespace0' })
                     s3!;
 
+                    // Comment 1
+                    // Comment 2
                     @State('s4', { namespace: 'namespace0' })
                     s4!;
 
-                    @State s1: string | null;
+                    @State s1: string | null; // Comment3
                   
                     @State("ss2")
                     s2!;

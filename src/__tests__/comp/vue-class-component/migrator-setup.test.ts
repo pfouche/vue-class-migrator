@@ -15,8 +15,8 @@ describe('@Component setup', () => {
                        console.log('...Ending') // 4 ...
                        // 5 Ignored
                     },
-            })
-            export default class Test {}`,
+                  })
+                  export default class Test {}`,
       // Result
       // I could not get the first and last comment lines added to the out file.
       // They are part of the initializer's body, but are wiped out by writeStatements(). 

@@ -1,5 +1,5 @@
 import {ClassDeclaration} from 'ts-morph';
-import {extractClassPropertyData, extractPropertiesWithDecorator} from '../../utils';
+import {commentOptions, extractClassPropertyData, extractPropertiesWithDecorator} from '../../utils';
 import {setupSpecialMethods, vueSpecialMethods} from '../../config';
 import MigrationManager from "../migratorManager";
 import {RoutingUsage} from "../types";
@@ -15,7 +15,7 @@ export default (migrationManager: MigrationManager) => {
       const name = method.getName();
       const setupName = setupSpecialMethods[name];
       if (setupName) {
-        migrationManager.addSpecialFunction({name: setupName, body: method.getBodyText()});
+        migrationManager.addSpecialFunction({name: setupName, body: method.getBodyText(), ...commentOptions(method)});
       } else {
         migrationManager.unsupported(`Function ${name}() not supported in setup() hook.`);
       }
@@ -48,6 +48,7 @@ export default (migrationManager: MigrationManager) => {
         isAsync: method.isAsync(),
         returnType: typeNode,
         body: method.getBodyText(),
+        ...commentOptions(method)
       });
       // methodsObject.addMethod({
       //     name: method.getName(),

@@ -1,4 +1,4 @@
-import { extractPropertiesWithDecorator, stringNodeToSTring } from '../../utils';
+import {commentOptions, extractPropertiesWithDecorator, stringNodeToSTring} from '../../utils';
 import type MigrationManager from '../migratorManager';
 
 // @Ref
@@ -19,6 +19,7 @@ export default (migrationManager: MigrationManager) => {
       get: {
         statements: `return ${refStatement}${refType ? ` as ${refType}` : ''};`,
       },
+      ...commentOptions(reference)
     });
   });
 };

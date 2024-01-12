@@ -1,5 +1,5 @@
 import { SyntaxKind } from 'ts-morph';
-import { extractPropertiesWithDecorator, stringNodeToSTring } from '../utils';
+import {commentOptions, extractPropertiesWithDecorator, stringNodeToSTring} from '../utils';
 import type MigrationManager from '../migratorManager';
 
 const supportedGetterOptions = ['namespace']; // @Getter("", {...})
@@ -37,6 +37,7 @@ export default (migrationManager: MigrationManager) => {
         name: vuexGetter.getName(),
         returnType: propertyType,
         statements: `return this.$store.getters["${getterName}"];`,
+        ...commentOptions(vuexGetter)
       });
     });
   }

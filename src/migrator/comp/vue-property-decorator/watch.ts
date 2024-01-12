@@ -1,5 +1,5 @@
 import {Decorator, SyntaxKind} from 'ts-morph';
-import {stringNodeToSTring} from '../../utils';
+import {commentOptions, stringNodeToSTring} from '../../utils';
 import type MigrationManager from '../migratorManager';
 
 // @Watcher
@@ -32,6 +32,7 @@ export default (migrationManager: MigrationManager) => {
       parameters: watcher.getParameters().map((p) => p.getStructure()),
       isAsync: watcher.isAsync(),
       body: watcher.getBodyText() ?? '',
+      ...commentOptions(watcher)
     });
   });
 };

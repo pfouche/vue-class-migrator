@@ -7,6 +7,7 @@ import type {
 } from 'ts-morph';
 import {SyntaxKind} from 'ts-morph';
 import logger from "./logger";
+import {CommentOptions} from "./comp/types";
 
 export const addPropertyObject = (mainObject: ObjectLiteralExpression, propName: string, initializer = '{}'): ObjectLiteralExpression => mainObject
   .addPropertyAssignment({
@@ -79,4 +80,12 @@ export const info = (outFile: SourceFile, msg: string) => {
   const m = `MIGRATION INFO: ${msg}`;
   outFile.addStatements([`console.log('${m}')`]);
   logger.info(m)
+};
+
+export const commentOptions = (node: Node): CommentOptions => {
+  const leadingCommentRanges = node.getLeadingCommentRanges();
+  const leadingComments = leadingCommentRanges.length > 0 ? `${leadingCommentRanges.map(cr => cr.getText()).join('\n')}\n` : undefined;
+  const trailingCommentRanges = node.getTrailingCommentRanges();
+  const trailingComments = trailingCommentRanges.length > 0 ? ` ${trailingCommentRanges.map(cr => cr.getText()).join('\n')}` : undefined;
+  return {leadingComments, trailingComments};
 }; 
